@@ -48,7 +48,6 @@ Editor y entorno de ejecución de Python para Android, diseñado para trabajar d
 
 <p align="center">
   <img src="docs/screenshots/premium-tools.png" alt="Plantillas, accesibilidad y herramientas premium de PixelPy" width="46%" />
-  <img src="docs/screenshots/notebook-mvp.png" alt="Notebook local de PixelPy ejecutándose en Android" width="46%" />
 </p>
 
 Consulta el flujo, Markdown compatible y límites del MVP en [Notebook local](docs/notebook.md).
@@ -89,7 +88,7 @@ El APK se genera en `pyeditor/build/outputs/apk/development/debug/`.
 
 ## Versión
 
-La versión estable actual es `1.5.0`, con el primer modo Notebook local integrado.
+La versión estable actual es `1.6.0`, con importación/exportación Jupyter y explorador responsive de notebooks.
 
 Las ejecuciones programadas son aproximadas: Android puede retrasarlas por batería, Doze o restricciones del sistema.
 

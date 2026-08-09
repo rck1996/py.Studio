@@ -1,5 +1,8 @@
 import java.util.Properties
 
+val configuredPython = providers.gradleProperty("pythonPath")
+    .orElse(providers.environmentVariable("PIXELPY_PYTHON"))
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -17,8 +20,8 @@ android {
         applicationId = "com.pixelpy.editor"
         minSdk = 26
         targetSdk = 35
-        versionCode = 18
-        versionName = "1.5.0"
+        versionCode = 19
+        versionName = "1.6.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     flavorDimensions += "target"
@@ -77,7 +80,7 @@ androidComponents {
 chaquopy {
     defaultConfig {
         version = "3.13"
-        buildPython("C:/Users/x13/AppData/Local/Programs/Python/Python313/python.exe")
+        configuredPython.orNull?.let { buildPython(it) }
         pip {
             install("requests==2.34.2")
             install("beautifulsoup4==4.15.0")

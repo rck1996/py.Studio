@@ -4,6 +4,7 @@ import java.io.File
 import java.util.UUID
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 
 internal enum class NotebookCellType { Code, Markdown }
 internal enum class NotebookCellStatus { Idle, Running, Success, Error }
@@ -50,6 +51,49 @@ internal class NotebookStore(private val project: File) {
     fun create(name: String): PixelNotebook = save(
         PixelNotebook(name = name.trim().ifBlank { "Notebook sin título" })
     )
+
+    fun importIpynb(source: String, fallbackName: String): PixelNotebook {
+        val json = JSONObject(source)
+        val cells = json.optJSONArray("cells") ?: JSONArray()
+        val imported = buildList {
+            repeat(cells.length().coerceAtMost(100)) { index ->
+                val cell = cells.getJSONObject(index)
+                val rawSource = cell.opt("source")
+                val text = when (rawSource) {
+                    is JSONArray -> buildString { repeat(rawSource.length()) { append(rawSource.optString(it)) } }
+                    else -> rawSource?.toString().orEmpty()
+                }
+                val type = if (cell.optString("cell_type").lowercase(Locale.ROOT) == "markdown") {
+                    NotebookCellType.Markdown
+                } else NotebookCellType.Code
+                add(NotebookCell(type = type, source = text))
+            }
+        }.ifEmpty { listOf(NotebookCell()) }
+        return save(PixelNotebook(name = fallbackName.substringBeforeLast('.').take(80), cells = imported))
+    }
+
+    fun duplicate(notebook: PixelNotebook): PixelNotebook = save(
+        notebook.copy(id = UUID.randomUUID().toString(), name = "${notebook.name} copia", updatedAtMillis = 0L)
+    )
+
+    fun exportIpynb(notebook: PixelNotebook): String = JSONObject()
+        .put("nbformat", 4)
+        .put("nbformat_minor", 5)
+        .put("metadata", JSONObject().put("language_info", JSONObject().put("name", "python")))
+        .put("cells", JSONArray().apply {
+            notebook.cells.forEach { cell ->
+                put(JSONObject()
+                    .put("cell_type", if (cell.type == NotebookCellType.Markdown) "markdown" else "code")
+                    .put("metadata", JSONObject())
+                    .put("source", cell.source)
+                    .apply {
+                        if (cell.type == NotebookCellType.Code) {
+                            put("execution_count", JSONObject.NULL)
+                            put("outputs", JSONArray())
+                        }
+                    })
+            }
+        }).toString(2)
 
     fun save(notebook: PixelNotebook): PixelNotebook {
         val normalized = notebook.copy(
