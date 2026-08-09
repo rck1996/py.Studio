@@ -1,10 +1,14 @@
 package com.pixelpy.editor
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -75,8 +79,42 @@ internal fun NotebookScreen(
     var notebook by remember(project) { mutableStateOf(store.getOrCreate()) }
     var selector by remember { mutableStateOf(false) }
     var newDialog by remember { mutableStateOf(false) }
+    var importError by remember { mutableStateOf<String?>(null) }
+    var exportNotebook by remember { mutableStateOf<PixelNotebook?>(null) }
+    var actionsExpanded by remember { mutableStateOf(false) }
     var runningIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            runCatching {
+                val name = context.contentResolver.query(uri, arrayOf("_display_name"), null, null, null)
+                    ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else "importado.ipynb" }
+                    ?: "importado.ipynb"
+                val content = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+                        ?: error("No se pudo abrir el archivo")
+                }
+                val imported = withContext(Dispatchers.IO) { store.importIpynb(content, name) }
+                notebook = imported
+                notebooks = store.list()
+            }.onFailure { importError = "No se pudo importar el notebook: ${it.message}" }
+        }
+    }
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
+        val target = exportNotebook ?: return@rememberLauncherForActivityResult
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8)?.use {
+                        it.write(store.exportIpynb(target))
+                    } ?: error("No se pudo guardar el archivo")
+                }
+            }.onFailure { importError = "No se pudo exportar el notebook: ${it.message}" }
+        }
+    }
 
     fun persist(next: PixelNotebook) {
         notebook = store.save(next)
@@ -169,7 +207,7 @@ internal fun NotebookScreen(
                     shape = RoundedCornerShape(0.dp),
                     border = BorderStroke(3.dp, NotebookInk),
                 ) { Text(notebook.name.uppercase(), color = NotebookInk, fontWeight = FontWeight.Black) }
-                DropdownMenu(expanded = selector, onDismissRequest = { selector = false }) {
+                if (false) DropdownMenu(expanded = selector, onDismissRequest = { selector = false }) {
                     notebooks.forEach { item ->
                         DropdownMenuItem(text = { Text(item.name) }, onClick = {
                             notebook = item
@@ -193,6 +231,57 @@ internal fun NotebookScreen(
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
         )
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            if (maxWidth >= 560.dp) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NotebookButton("IMPORTAR .IPYNB", NotebookBlue, Modifier.weight(1f)) {
+                        importLauncher.launch(arrayOf("application/json", "text/plain"))
+                    }
+                    NotebookButton("EXPORTAR", NotebookYellow, Modifier.weight(1f)) {
+                        exportNotebook = notebook
+                        exportLauncher.launch("${notebook.name}.ipynb")
+                    }
+                    NotebookButton("DUPLICAR", NotebookPink, Modifier.weight(1f)) {
+                        val copy = store.duplicate(notebook)
+                        notebook = copy
+                        notebooks = store.list()
+                    }
+                }
+            } else {
+                Box {
+                    NotebookButton("ACCIONES ▾", NotebookYellow) { actionsExpanded = true }
+                    DropdownMenu(
+                        expanded = actionsExpanded,
+                        onDismissRequest = { actionsExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("IMPORTAR .IPYNB", fontWeight = FontWeight.Black) },
+                            onClick = {
+                                actionsExpanded = false
+                                importLauncher.launch(arrayOf("application/json", "text/plain"))
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("EXPORTAR", fontWeight = FontWeight.Black) },
+                            onClick = {
+                                actionsExpanded = false
+                                exportNotebook = notebook
+                                exportLauncher.launch("${notebook.name}.ipynb")
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("DUPLICAR", fontWeight = FontWeight.Black) },
+                            onClick = {
+                                actionsExpanded = false
+                                val copy = store.duplicate(notebook)
+                                notebook = copy
+                                notebooks = store.list()
+                            },
+                        )
+                    }
+                }
+            }
+        }
         LazyColumn(
             Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -241,6 +330,45 @@ internal fun NotebookScreen(
         }
     }
 
+    if (selector) {
+        AlertDialog(
+            onDismissRequest = { selector = false },
+            shape = RoundedCornerShape(0.dp),
+            containerColor = NotebookPaper,
+            title = { Text("MIS NOTEBOOKS", fontWeight = FontWeight.Black) },
+            text = {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    itemsIndexed(notebooks, key = { _, item -> item.id }) { _, item ->
+                        Row(
+                            Modifier.fillMaxWidth().background(if (item.id == notebook.id) NotebookYellow else Color.White)
+                                .border(2.dp, NotebookInk).padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(item.name, fontWeight = FontWeight.Black, color = NotebookInk)
+                                Text("${item.cells.size} celdas", fontSize = 11.sp, color = NotebookInk)
+                            }
+                            NotebookButton("ABRIR", NotebookBlue) {
+                                notebook = item
+                                selector = false
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                NotebookButton("＋ NUEVO", NotebookGreen) {
+                    selector = false
+                    newDialog = true
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { selector = false }) {
+                    Text("CERRAR", color = NotebookInk, fontWeight = FontWeight.Black)
+                }
+            },
+        )
+    }
     if (newDialog) {
         var name by remember { mutableStateOf("") }
         AlertDialog(
@@ -257,6 +385,16 @@ internal fun NotebookScreen(
                 }
             },
             dismissButton = { TextButton(onClick = { newDialog = false }) { Text("CANCELAR") } },
+        )
+    }
+    importError?.let { message ->
+        AlertDialog(
+            onDismissRequest = { importError = null },
+            shape = RoundedCornerShape(0.dp),
+            containerColor = NotebookYellow,
+            title = { Text("IMPORTACIÓN FALLIDA", fontWeight = FontWeight.Black) },
+            text = { Text(message) },
+            confirmButton = { NotebookButton("CERRAR", NotebookGreen) { importError = null } },
         )
     }
 }

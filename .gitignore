@@ -14,4 +14,5 @@ keystore.properties
 /releases/
 __pycache__/
 *.pyc
+graphify-out/
 /*.zip
