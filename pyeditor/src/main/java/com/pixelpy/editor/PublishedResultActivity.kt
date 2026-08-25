@@ -243,7 +243,7 @@ private fun PublishedResultScreen(
 ) {
     Column(Modifier.fillMaxSize().background(ResultPaper)) {
         Row(
-            Modifier.fillMaxWidth().background(ResultYellow).statusBarsPadding().border(3.dp, ResultInk).padding(12.dp),
+            Modifier.fillMaxWidth().background(ResultYellow).statusBarsPadding().border(2.dp, ResultInk).padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Surface(
@@ -251,7 +251,8 @@ private fun PublishedResultScreen(
                 color = ResultInk,
                 contentColor = ResultYellow,
                 border = BorderStroke(2.dp, ResultInk),
-                modifier = Modifier.height(48.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp),
+                modifier = Modifier.height(44.dp),
             ) {
                 Box(Modifier.padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
                     Text("← VOLVER", fontWeight = FontWeight.Black, fontSize = 11.sp)
@@ -288,7 +289,7 @@ private fun PublishedResultScreen(
                     Text("${humanFileSize(file.length())} · ${mimeType ?: mimeTypeForFile(file)}", fontSize = 11.sp)
                 }
             }
-            Surface(Modifier.fillMaxWidth(), color = Color.White, border = BorderStroke(3.dp, ResultInk)) {
+            Surface(Modifier.fillMaxWidth(), color = Color.White, border = BorderStroke(2.dp, ResultInk), shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) {
                 Column {
                     if (kind in listOf(PublishedPreviewKind.Text, PublishedPreviewKind.Markdown, PublishedPreviewKind.Json, PublishedPreviewKind.Csv, PublishedPreviewKind.Excel)) {
                         OutlinedTextField(
@@ -303,10 +304,10 @@ private fun PublishedResultScreen(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { onShare(file) }, modifier = Modifier.weight(1f)) {
+                Button(onClick = { onShare(file) }, modifier = Modifier.weight(1f), shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) {
                     Text("COMPARTIR", fontWeight = FontWeight.Black)
                 }
-                OutlinedButton(onClick = { onExternal(file) }, modifier = Modifier.weight(1f)) {
+                OutlinedButton(onClick = { onExternal(file) }, modifier = Modifier.weight(1f), shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) {
                     Text("OTRA APP", fontWeight = FontWeight.Black)
                 }
             }

@@ -23,6 +23,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
@@ -42,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -228,6 +231,7 @@ private fun AutomationCard(
     onOpen: () -> Unit,
     onDetails: () -> Unit,
 ) {
+    var moreActions by remember(automation.id) { mutableStateOf(false) }
     val statusColor = when (automation.lastStatus) {
         AutomationRunStatus.Success -> AutomationGreen
         AutomationRunStatus.Error -> AutomationPink
@@ -254,12 +258,17 @@ private fun AutomationCard(
             Text(automation.summary, maxLines = 3, fontFamily = FontFamily.Monospace, fontSize = 11.sp)
         }
         Spacer(Modifier.height(10.dp))
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-            Button(onClick = onRun, enabled = automation.enabled, modifier = Modifier.testTag("automation-run-${automation.id}")) { Text("EJECUTAR AHORA") }
-            OutlinedButton(onClick = onOpen, enabled = automation.publishedArtifactPath != null) { Text("ABRIR RESULTADO") }
-            OutlinedButton(onClick = onEdit) { Text("EDITAR") }
-            OutlinedButton(onClick = onDetails) { Text("DETALLES") }
-            TextButton(onClick = onDelete) { Text("ELIMINAR") }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            Button(onClick = onRun, enabled = automation.enabled, modifier = Modifier.weight(1f).testTag("automation-run-${automation.id}"), shape = RoundedCornerShape(0.dp)) { Text("EJECUTAR") }
+            OutlinedButton(onClick = onOpen, enabled = automation.publishedArtifactPath != null, modifier = Modifier.weight(1f), shape = RoundedCornerShape(0.dp)) { Text("ABRIR") }
+            Box {
+                OutlinedButton(onClick = { moreActions = true }, shape = RoundedCornerShape(0.dp)) { Text("MÁS ⋮") }
+                DropdownMenu(expanded = moreActions, onDismissRequest = { moreActions = false }) {
+                    DropdownMenuItem(text = { Text("Editar") }, onClick = { moreActions = false; onEdit() })
+                    DropdownMenuItem(text = { Text("Detalles e historial") }, onClick = { moreActions = false; onDetails() })
+                    DropdownMenuItem(text = { Text("Eliminar") }, onClick = { moreActions = false; onDelete() })
+                }
+            }
         }
     }
 }
@@ -379,8 +388,8 @@ private fun AutomationPanel(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface(modifier.fillMaxWidth().border(3.dp, AutomationInk), color = color) {
-        Column(Modifier.padding(14.dp), content = content)
+    Surface(modifier.fillMaxWidth().border(2.dp, AutomationInk), color = color, shape = RoundedCornerShape(0.dp)) {
+        Column(Modifier.padding(12.dp), content = content)
     }
 }
 
@@ -413,6 +422,9 @@ private fun AutomationEditorDialog(
             initial.parameters.map { AutomationParameter(it.key, defaultValue = it.value) }
         })
     }
+    var advancedExpanded by remember(initial.id) { mutableStateOf(false) }
+    var resultExpanded by remember(initial.id) { mutableStateOf(initial.highlightedResultPath != null) }
+    var parametersExpanded by remember(initial.id) { mutableStateOf(initial.parameterDefinitions.isNotEmpty() || initial.parameters.isNotEmpty()) }
     var error by remember { mutableStateOf("") }
     val selectedProject = projects.firstOrNull {
         runCatching { it.canonicalFile.relativeTo(projectsRoot.canonicalFile).invariantSeparatorsPath == projectPath }.getOrDefault(false)
@@ -424,6 +436,8 @@ private fun AutomationEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(0.dp),
+        containerColor = AutomationPaper,
         title = { Text(if (repositoryStyleIsNew(initial)) "NUEVA AUTOMATIZACIÓN" else "EDITAR AUTOMATIZACIÓN", fontWeight = FontWeight.Black) },
         text = {
             Column(Modifier.heightIn(max = 610.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -471,14 +485,20 @@ private fun AutomationEditorDialog(
                     }
                 }
                 HorizontalDivider()
-                AutomationSwitch("Red requerida", network) { network = it }
-                AutomationSwitch("Solo mientras carga", charging) { charging = it }
-                AutomationSwitch("Esperar si la batería está baja", battery) { battery = it }
-                OutlinedTextField(timeout, { timeout = it.filter(Char::isDigit) }, Modifier.fillMaxWidth(), label = { Text("Timeout (5–120 segundos)") }, singleLine = true)
-                OutlinedTextField(resultPath, { resultPath = it }, Modifier.fillMaxWidth(), label = { Text("Resultado destacado opcional") }, supportingText = { Text("Ruta relativa, por ejemplo reporte.xlsx") }, singleLine = true)
-                Text("PARÁMETROS", fontWeight = FontWeight.Black)
-                Text("Disponibles mediante os.getenv(\"NOMBRE\"). Los secretos permanecen ocultos en pantalla.", fontSize = 11.sp)
-                parameterDefinitions.forEachIndexed { index, parameter ->
+                OutlinedButton(onClick = { resultExpanded = !resultExpanded }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(0.dp)) { Text("${if (resultExpanded) "▾" else "▸"} RESULTADO PUBLICADO") }
+                if (resultExpanded) {
+                    OutlinedTextField(resultPath, { resultPath = it }, Modifier.fillMaxWidth(), label = { Text("Resultado destacado opcional") }, supportingText = { Text("Ruta relativa, por ejemplo reporte.xlsx") }, singleLine = true)
+                    if (resultCandidates.isNotEmpty()) Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        resultCandidates.forEach { file ->
+                            val relative = file.canonicalFile.relativeTo(requireNotNull(selectedProject).canonicalFile).invariantSeparatorsPath
+                            FilterChip(selected = resultPath == relative, onClick = { resultPath = relative }, label = { Text(relative) })
+                        }
+                    }
+                }
+                OutlinedButton(onClick = { parametersExpanded = !parametersExpanded }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(0.dp)) { Text("${if (parametersExpanded) "▾" else "▸"} PARÁMETROS · ${parameterDefinitions.size}") }
+                if (parametersExpanded) {
+                    Text("Disponibles mediante os.getenv(\"NOMBRE\"). Los secretos permanecen ocultos en pantalla.", fontSize = 11.sp)
+                    parameterDefinitions.forEachIndexed { index, parameter ->
                     Column(Modifier.fillMaxWidth().border(2.dp, AutomationInk).padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             OutlinedTextField(parameter.name, { value ->
@@ -513,14 +533,14 @@ private fun AutomationEditorDialog(
                         )
                     }
                 }
-                OutlinedButton(onClick = { parameterDefinitions = parameterDefinitions + AutomationParameter("PARAMETRO_${parameterDefinitions.size + 1}") }) { Text("＋ PARÁMETRO") }
-                if (resultCandidates.isNotEmpty()) {
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        resultCandidates.forEach { file ->
-                            val relative = file.canonicalFile.relativeTo(requireNotNull(selectedProject).canonicalFile).invariantSeparatorsPath
-                            FilterChip(selected = resultPath == relative, onClick = { resultPath = relative }, label = { Text(relative) })
-                        }
-                    }
+                    OutlinedButton(onClick = { parameterDefinitions = parameterDefinitions + AutomationParameter("PARAMETRO_${parameterDefinitions.size + 1}") }, shape = RoundedCornerShape(0.dp)) { Text("＋ PARÁMETRO") }
+                }
+                OutlinedButton(onClick = { advancedExpanded = !advancedExpanded }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(0.dp)) { Text("${if (advancedExpanded) "▾" else "▸"} RESTRICCIONES AVANZADAS") }
+                if (advancedExpanded) {
+                    AutomationSwitch("Red requerida", network) { network = it }
+                    AutomationSwitch("Solo mientras carga", charging) { charging = it }
+                    AutomationSwitch("Esperar si la batería está baja", battery) { battery = it }
+                    OutlinedTextField(timeout, { timeout = it.filter(Char::isDigit) }, Modifier.fillMaxWidth(), label = { Text("Timeout (5–120 segundos)") }, singleLine = true)
                 }
                 if (error.isNotBlank()) Text(error, color = Color(0xFFC62828), fontWeight = FontWeight.Bold)
             }

@@ -7,7 +7,7 @@ import org.json.JSONObject
 import java.util.Locale
 
 internal enum class NotebookCellType { Code, Markdown }
-internal enum class NotebookCellStatus { Idle, Running, Success, Error }
+internal enum class NotebookCellStatus { Idle, Running, Success, Error, Stale }
 
 internal data class NotebookCell(
     val id: String = UUID.randomUUID().toString(),
@@ -163,6 +163,19 @@ internal fun cumulativeNotebookSource(cells: List<NotebookCell>, throughIndex: I
     cells.take(throughIndex + 1)
         .filter { it.type == NotebookCellType.Code }
         .joinToString("\n\n") { "# PixelPy cell ${it.id}\n${it.source}" }
+
+internal fun invalidateNotebookCellsAfterEdit(
+    cells: List<NotebookCell>,
+    editedIndex: Int,
+    source: String,
+): List<NotebookCell> = cells.mapIndexed { index, cell ->
+    when {
+        index == editedIndex -> cell.copy(source = source, status = NotebookCellStatus.Idle)
+        index > editedIndex && cell.type == NotebookCellType.Code && cell.status != NotebookCellStatus.Idle ->
+            cell.copy(status = NotebookCellStatus.Stale)
+        else -> cell
+    }
+}
 
 internal sealed interface NotebookMarkdownBlock {
     data class Heading(val level: Int, val text: String) : NotebookMarkdownBlock

@@ -580,11 +580,10 @@ class MainActivity : ComponentActivity() {
     CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, LocalDensity.current.fontScale * interfaceScale)) {
     MaterialTheme(colorScheme = scheme) {
         Scaffold(modifier = Modifier.testTag("pixelpy-root"), containerColor = scheme.background, topBar = {
-            Row(Modifier.fillMaxWidth().background(Yellow).statusBarsPadding().height(68.dp).border(3.dp, Ink).padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(painterResource(R.drawable.pixelpy_brand_mark), "PixelPy", Modifier.size(38.dp), tint = Color.Unspecified)
-                Spacer(Modifier.width(10.dp)); Column(Modifier.weight(1f)) { Text("PIXELPY", fontWeight = FontWeight.Black, fontSize = 21.sp); Text(current.name, Modifier.testTag("current-file-name"), fontFamily = FontFamily.Monospace, fontSize = 12.sp) }
+            Row(Modifier.fillMaxWidth().background(Yellow).statusBarsPadding().height(58.dp).border(2.dp, Ink).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(painterResource(R.drawable.pixelpy_brand_mark), "PixelPy", Modifier.size(34.dp), tint = Color.Unspecified)
+                Spacer(Modifier.width(9.dp)); Column(Modifier.weight(1f)) { Text("PIXELPY", fontWeight = FontWeight.Black, fontSize = 18.sp); Text(current.name, Modifier.testTag("current-file-name"), fontFamily = FontFamily.Monospace, fontSize = 11.sp, maxLines = 1) }
                 if (!showAutomations && !showNotebook && (tab == Tab.Editor || running)) {
-                    if (!running) { BrutalButton("DEBUG", Blue) { runCode(true) }; Spacer(Modifier.width(6.dp)) }
                     BrutalButton(if (running) "■ DETENER" else "▶ EJECUTAR", if (running) Pink else Green, Modifier.testTag("run-button"), onClick = { if (running) stopCode() else runCode(false) })
                 } else {
                     Surface(color = Paper, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(0.dp)) {
@@ -593,7 +592,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }, bottomBar = {
-            Row(Modifier.fillMaxWidth().background(Ink).navigationBarsPadding().height(68.dp)) {
+            Row(Modifier.fillMaxWidth().background(Ink).navigationBarsPadding().height(58.dp)) {
                 Nav(Tab.Projects, tab, "PROYECTOS", Icons.Outlined.Folder) { showAutomations = false; showNotebook = false; tab = it }
                 Nav(Tab.Editor, tab, "EDITOR", Icons.Outlined.Code) { showAutomations = false; showNotebook = false; tab = it }
                 Nav(Tab.Repl, tab, "REPL", Icons.Outlined.DataObject) { showAutomations = false; showNotebook = false; tab = it }
@@ -702,7 +701,7 @@ class MainActivity : ComponentActivity() {
                             openNow(created)
                         }
                     })
-                    Tab.Editor -> Editor(files, current, code, saveStatus, onOpen = ::open, onTestAutomation = ::testCurrentAsAutomation, onCode = { next ->
+                    Tab.Editor -> Editor(files, current, code, saveStatus, onOpen = ::open, onDebug = { runCode(true) }, onTestAutomation = ::testCurrentAsAutomation, onCode = { next ->
                         val textChanged = next.text != code.text
                         selectionReference.set(next.selection)
                         code = next
@@ -815,8 +814,8 @@ class MainActivity : ComponentActivity() {
 @Composable private fun RowScope.Nav(value: Tab, selected: Tab, label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: (Tab) -> Unit) {
     val active = value == selected
     Column(Modifier.weight(1f).fillMaxHeight().testTag("nav-${value.name.lowercase()}").clickable { onClick(value) }.background(if (active) Yellow else Ink), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Icon(icon, null, tint = if (active) Ink else Color.White)
-        Text(label, color = if (active) Ink else Color.White, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+        Icon(icon, null, Modifier.size(21.dp), tint = if (active) Ink else Color.White)
+        Text(label, color = if (active) Ink else Color.White, fontWeight = FontWeight.Bold, fontSize = 9.sp)
     }
 }
 
@@ -835,6 +834,8 @@ private fun interface ResourceImporter {
     var folderDialog by remember { mutableStateOf(false) }
     var resourceRenameTarget by remember { mutableStateOf<File?>(null) }
     var resourceActionsTarget by remember { mutableStateOf<File?>(null) }
+    var scriptActionsTarget by remember { mutableStateOf<File?>(null) }
+    var contentSection by rememberSaveable(selectedProject.path) { mutableStateOf("SCRIPTS") }
     var selectedResources by remember { mutableStateOf<Set<String>>(emptySet()) }
     var selectedResourceFolder by remember(selectedProject) { mutableStateOf("") }
     val folders = resourceFolders(selectedProject)
@@ -843,25 +844,70 @@ private fun interface ResourceImporter {
     }
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
     LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        item { Text("PROYECTOS", fontWeight = FontWeight.Black, fontSize = 30.sp); Text("Tus archivos, módulos y recursos locales.", fontWeight = FontWeight.Medium); Spacer(Modifier.height(10.dp)); Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) { projects.forEach { project -> Surface(onClick = { onProject(project) }, modifier = Modifier.testTag("project-${project.name}"), color = if (project == selectedProject) Yellow else Color.White, border = BorderStroke(3.dp, Ink), shape = RoundedCornerShape(0.dp)) { Text("▣ ${project.name}", Modifier.padding(12.dp, 9.dp), fontWeight = FontWeight.Black) } }; Surface(onClick = onNewProject, color = Pink, border = BorderStroke(3.dp, Ink), shape = RoundedCornerShape(0.dp)) { Text("＋ PROYECTO", Modifier.padding(12.dp, 9.dp), fontWeight = FontWeight.Black) } }; Spacer(Modifier.height(12.dp)); Text(selectedProject.name.uppercase(), Modifier.testTag("current-project-name"), fontWeight = FontWeight.Black, fontSize = 18.sp); Spacer(Modifier.height(8.dp)); Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { BrutalButton("＋ ARCHIVO", Pink, Modifier.weight(1f), onClick = onNew); Box(Modifier.weight(1f)) { BrutalButton("MÁS ACCIONES", Blue, Modifier.fillMaxWidth()) { projectActions = true }; DropdownMenu(expanded = projectActions, onDismissRequest = { projectActions = false }) { DropdownMenuItem(text = { Text("Plantillas y favoritos") }, onClick = { projectActions = false; templates = true }, leadingIcon = { Icon(Icons.Outlined.Star, null) }); DropdownMenuItem(text = { Text("Apariencia y accesibilidad") }, onClick = { projectActions = false; onPreferences() }, leadingIcon = { Icon(Icons.Outlined.Settings, null) }); DropdownMenuItem(text = { Text("Importar archivo .py") }, onClick = { projectActions = false; onImport() }, leadingIcon = { Icon(Icons.Outlined.FileOpen, null) }); DropdownMenuItem(text = { Text("Añadir recurso") }, onClick = { projectActions = false; onImportResource() }, leadingIcon = { Icon(Icons.Outlined.AttachFile, null) }); DropdownMenuItem(text = { Text("Importar proyecto ZIP") }, onClick = { projectActions = false; onImportProject() }, leadingIcon = { Icon(Icons.Outlined.FolderZip, null) }); DropdownMenuItem(text = { Text("Exportar proyecto ZIP") }, onClick = { projectActions = false; onExportProject(selectedProject) }, leadingIcon = { Icon(Icons.Outlined.Archive, null) }); DropdownMenuItem(text = { Text("Librerías incluidas") }, onClick = { projectActions = false; packages = true }, leadingIcon = { Icon(Icons.Outlined.Extension, null) }); DropdownMenuItem(text = { Text("Papelera") }, onClick = { projectActions = false; trash = true }, leadingIcon = { Icon(Icons.Outlined.Delete, null) }) } } } }
         item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("PROYECTOS", fontWeight = FontWeight.Black, fontSize = 26.sp)
+            Text("Código, datos y herramientas del proyecto.", fontSize = 13.sp)
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                projects.forEach { project ->
+                    Surface(onClick = { onProject(project) }, modifier = Modifier.testTag("project-${project.name}"), color = if (project == selectedProject) Yellow else Color.White, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(0.dp)) {
+                        Text("▣ ${project.name}", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Black, fontSize = 12.sp)
+                    }
+                }
+                Surface(onClick = onNewProject, color = Pink, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(0.dp)) { Text("＋ NUEVO", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Black, fontSize = 12.sp) }
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(selectedProject.name, Modifier.testTag("current-project-name"), fontWeight = FontWeight.Black, fontSize = 18.sp, maxLines = 1)
+                    Text("${files.size} scripts · ${resources.size} recursos", fontSize = 11.sp)
+                }
+                Box {
+                    IconButton(onClick = { projectActions = true }, Modifier.border(2.dp, Ink)) { Icon(Icons.Outlined.MoreVert, "Acciones del proyecto") }
+                    DropdownMenu(expanded = projectActions, onDismissRequest = { projectActions = false }) {
+                        DropdownMenuItem(text = { Text("Plantillas y favoritos") }, onClick = { projectActions = false; templates = true }, leadingIcon = { Icon(Icons.Outlined.Star, null) })
+                        DropdownMenuItem(text = { Text("Apariencia y accesibilidad") }, onClick = { projectActions = false; onPreferences() }, leadingIcon = { Icon(Icons.Outlined.Settings, null) })
+                        DropdownMenuItem(text = { Text("Importar archivo .py") }, onClick = { projectActions = false; onImport() }, leadingIcon = { Icon(Icons.Outlined.FileOpen, null) })
+                        DropdownMenuItem(text = { Text("Importar proyecto ZIP") }, onClick = { projectActions = false; onImportProject() }, leadingIcon = { Icon(Icons.Outlined.FolderZip, null) })
+                        DropdownMenuItem(text = { Text("Exportar proyecto ZIP") }, onClick = { projectActions = false; onExportProject(selectedProject) }, leadingIcon = { Icon(Icons.Outlined.Archive, null) })
+                        DropdownMenuItem(text = { Text("Librerías incluidas") }, onClick = { projectActions = false; packages = true }, leadingIcon = { Icon(Icons.Outlined.Extension, null) })
+                        DropdownMenuItem(text = { Text("Papelera") }, onClick = { projectActions = false; trash = true }, leadingIcon = { Icon(Icons.Outlined.Delete, null) })
+                    }
+                }
+            }
+        }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 BrutalButton("▦ NOTEBOOK", Pink, Modifier.weight(1f).testTag("open-notebook"), onClick = onNotebook)
                 BrutalButton("⚙ AUTOMATIZACIONES", Green, Modifier.weight(1f).testTag("open-automations"), onClick = onAutomations)
             }
         }
-        items(files, key = { it.path }) { file ->
-            BrutalCard(if (file == current) Blue else Color.White) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(48.dp).background(Yellow).border(2.dp, Ink), contentAlignment = Alignment.Center) { Text(".PY", fontWeight = FontWeight.Black) }
-                    Spacer(Modifier.width(12.dp)); Column(Modifier.weight(1f)) { Text(file.name, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 17.sp); Text("${file.readLines().size} líneas · guardado local", fontSize = 12.sp) }
-                    IconButton(onClick = { onShare(file) }) { Icon(Icons.Outlined.Share, "Compartir") }
-                    IconButton(onClick = { onDelete(file) }, enabled = files.size > 1) { Icon(Icons.Outlined.Delete, "Eliminar") }
-                }
-                Spacer(Modifier.height(10.dp)); Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { BrutalButton(if (file == current) "ABIERTO" else "ABRIR", if (file == current) Green else Yellow, Modifier.weight(1f).testTag("project-open-${file.name}"), onClick = { onOpen(file) }); IconButton(onClick = { renameTarget = file }, Modifier.border(2.dp, Ink)) { Icon(Icons.Outlined.Edit, "Renombrar") }; IconButton(onClick = { onDuplicate(file) }, Modifier.border(2.dp, Ink)) { Icon(Icons.Outlined.ContentCopy, "Duplicar") } }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                BrutalButton("SCRIPTS ${files.size}", if (contentSection == "SCRIPTS") Yellow else Color.White, Modifier.weight(1f)) { contentSection = "SCRIPTS" }
+                BrutalButton("RECURSOS ${resources.size}", if (contentSection == "RECURSOS") Blue else Color.White, Modifier.weight(1f)) { contentSection = "RECURSOS" }
             }
         }
-        item {
+        if (contentSection == "SCRIPTS") item { BrutalButton("＋ NUEVO SCRIPT", Pink, Modifier.fillMaxWidth(), onClick = onNew) }
+        if (contentSection == "SCRIPTS") items(files, key = { it.path }) { file ->
+            BrutalCard(if (file == current) Blue else Color.White) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(40.dp).background(Yellow).border(2.dp, Ink), contentAlignment = Alignment.Center) { Text(".PY", fontWeight = FontWeight.Black, fontSize = 11.sp) }
+                    Spacer(Modifier.width(10.dp)); Column(Modifier.weight(1f)) { Text(file.name, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1); Text("${formatBytes(file.length())}${if (file == current) " · abierto" else " · guardado local"}", fontSize = 11.sp) }
+                    Box {
+                        IconButton(onClick = { scriptActionsTarget = file }) { Icon(Icons.Outlined.MoreVert, "Más acciones") }
+                        DropdownMenu(expanded = scriptActionsTarget == file, onDismissRequest = { scriptActionsTarget = null }) {
+                            DropdownMenuItem(text = { Text("Compartir") }, onClick = { scriptActionsTarget = null; onShare(file) }, leadingIcon = { Icon(Icons.Outlined.Share, null) })
+                            DropdownMenuItem(text = { Text("Renombrar") }, onClick = { scriptActionsTarget = null; renameTarget = file }, leadingIcon = { Icon(Icons.Outlined.Edit, null) })
+                            DropdownMenuItem(text = { Text("Duplicar") }, onClick = { scriptActionsTarget = null; onDuplicate(file) }, leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) })
+                            DropdownMenuItem(text = { Text("Mover a papelera") }, enabled = files.size > 1, onClick = { scriptActionsTarget = null; onDelete(file) }, leadingIcon = { Icon(Icons.Outlined.Delete, null) })
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp)); BrutalButton(if (file == current) "ABIERTO" else "ABRIR", if (file == current) Green else Yellow, Modifier.fillMaxWidth().testTag("project-open-${file.name}"), onClick = { onOpen(file) })
+            }
+        }
+        if (contentSection == "RECURSOS") item {
             Spacer(Modifier.height(4.dp))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("RECURSOS", fontWeight = FontWeight.Black, fontSize = 22.sp)
@@ -872,7 +918,7 @@ private fun interface ResourceImporter {
                 }
             }
         }
-        item {
+        if (contentSection == "RECURSOS") item {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(if (selectedResourceFolder.isBlank()) "Destino: raíz del proyecto" else "Destino: $selectedResourceFolder", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -884,8 +930,8 @@ private fun interface ResourceImporter {
                 }
             }
         }
-        if (resources.isEmpty()) item { Surface(color = Color.White, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) { Text(if (folders.isEmpty()) "Este proyecto todavía no tiene archivos de datos." else "Las carpetas están vacías. Elige un destino y añade un recurso.", Modifier.padding(14.dp)) } }
-        items(resources.filter { file ->
+        if (contentSection == "RECURSOS" && resources.isEmpty()) item { Surface(color = Color.White, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) { Text(if (folders.isEmpty()) "Este proyecto todavía no tiene archivos de datos." else "Las carpetas están vacías. Elige un destino y añade un recurso.", Modifier.padding(14.dp)) } }
+        if (contentSection == "RECURSOS") items(resources.filter { file ->
             requireNotNull(file.parentFile).relativeTo(selectedProject).invariantSeparatorsPath.takeUnless { it == "." }.orEmpty() == selectedResourceFolder
         }, key = { it.path }) { file ->
             BrutalCard(Color.White) {
@@ -936,7 +982,7 @@ private fun interface ResourceImporter {
     }
 }
 
-@Composable private fun Editor(files: List<File>, current: File, code: TextFieldValue, saveStatus: SaveStatus, onOpen: (File) -> Unit, onTestAutomation: () -> Unit, onCode: (TextFieldValue) -> Unit) {
+@Composable private fun Editor(files: List<File>, current: File, code: TextFieldValue, saveStatus: SaveStatus, onOpen: (File) -> Unit, onDebug: () -> Unit, onTestAutomation: () -> Unit, onCode: (TextFieldValue) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var undo by remember { mutableStateOf<List<TextFieldValue>>(emptyList()) }
     var redo by remember { mutableStateOf<List<TextFieldValue>>(emptyList()) }
@@ -949,6 +995,7 @@ private fun interface ResourceImporter {
     var moreTools by remember { mutableStateOf(false) }
     val editorVerticalScroll = rememberScrollState()
     val editorHorizontalScroll = rememberScrollState()
+    val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     LaunchedEffect(fontSize) { context.getSharedPreferences("pixelpy", 0).edit().putFloat("font_size", fontSize).apply() }
     val completionPrefix = code.text.substring(0, code.selection.min).takeLastWhile { it.isLetterOrDigit() || it == '_' }
     val completions = if (completionPrefix.length >= 2) completionItems(
@@ -961,12 +1008,13 @@ private fun interface ResourceImporter {
         change(TextFieldValue(code.text.replaceRange(start, end, value), TextRange(start + value.length)))
     }
     Column(Modifier.fillMaxSize().imePadding().padding(12.dp)) {
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (!keyboardVisible) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             files.forEach { file -> Surface(onClick = { onOpen(file) }, modifier = Modifier.testTag("editor-file-${file.name}"), color = if (file == current) Yellow else Color.White, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(0.dp)) { Text((if (file == current) "● " else "") + file.name, Modifier.padding(horizontal = 11.dp, vertical = 7.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 11.sp) } }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column {
-                Text("EDITOR", fontWeight = FontWeight.Black, fontSize = 18.sp)
+            Column(Modifier.weight(1f)) {
+                if (!keyboardVisible) Text("EDITOR", fontWeight = FontWeight.Black, fontSize = 17.sp)
+                else Text(current.name, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
                 val statusText = when (saveStatus) {
                     SaveStatus.Editing -> "● EDITANDO"
                     SaveStatus.Saving -> "● GUARDANDO"
@@ -975,13 +1023,15 @@ private fun interface ResourceImporter {
                 }
                 Text(statusText, Modifier.testTag("save-status"), color = if (saveStatus == SaveStatus.Error) Color(0xFFC62828) else Color(0xFF16853B), fontWeight = FontWeight.Black, fontSize = 9.sp)
             }
-            Spacer(Modifier.weight(1f))
             IconButton(onClick = { searching = !searching }) { Icon(Icons.Outlined.Search, "Buscar") }
-            IconButton(onClick = { if (undo.isNotEmpty()) { redo = redo + code; val previous = undo.last(); undo = undo.dropLast(1); onCode(previous) } }, enabled = undo.isNotEmpty()) { Icon(Icons.Outlined.Undo, "Deshacer") }
-            IconButton(onClick = { if (redo.isNotEmpty()) { undo = undo + code; val next = redo.last(); redo = redo.dropLast(1); onCode(next) } }, enabled = redo.isNotEmpty()) { Icon(Icons.Outlined.Redo, "Rehacer") }
+            if (!keyboardVisible) IconButton(onClick = { if (undo.isNotEmpty()) { redo = redo + code; val previous = undo.last(); undo = undo.dropLast(1); onCode(previous) } }, enabled = undo.isNotEmpty()) { Icon(Icons.Outlined.Undo, "Deshacer") }
+            if (!keyboardVisible) IconButton(onClick = { if (redo.isNotEmpty()) { undo = undo + code; val next = redo.last(); redo = redo.dropLast(1); onCode(next) } }, enabled = redo.isNotEmpty()) { Icon(Icons.Outlined.Redo, "Rehacer") }
             Box {
                 IconButton(onClick = { moreTools = true }) { Icon(Icons.Outlined.MoreVert, "Más herramientas") }
                 DropdownMenu(moreTools, { moreTools = false }) {
+                    DropdownMenuItem({ Text("Depurar ejecución") }, { moreTools = false; onDebug() }, leadingIcon = { Icon(Icons.Outlined.BugReport, null) })
+                    DropdownMenuItem({ Text("Deshacer") }, { moreTools = false; if (undo.isNotEmpty()) { redo = redo + code; val previous = undo.last(); undo = undo.dropLast(1); onCode(previous) } }, enabled = undo.isNotEmpty(), leadingIcon = { Icon(Icons.Outlined.Undo, null) })
+                    DropdownMenuItem({ Text("Rehacer") }, { moreTools = false; if (redo.isNotEmpty()) { undo = undo + code; val next = redo.last(); redo = redo.dropLast(1); onCode(next) } }, enabled = redo.isNotEmpty(), leadingIcon = { Icon(Icons.Outlined.Redo, null) })
                     DropdownMenuItem({ Text("Probar como automatización") }, { moreTools = false; onTestAutomation() }, leadingIcon = { Icon(Icons.Outlined.Schedule, null) })
                     DropdownMenuItem({ Text("Estructura del código") }, { moreTools = false; showOutline = true }, leadingIcon = { Icon(Icons.Outlined.AccountTree, null) })
                     DropdownMenuItem({ Text("Versiones anteriores") }, { moreTools = false; showVersions = true }, leadingIcon = { Icon(Icons.Outlined.Restore, null) })
@@ -1075,44 +1125,37 @@ private fun interface ResourceImporter {
     var consolePage by remember { mutableStateOf("SALIDA") }
     var consoleSearch by remember { mutableStateOf("") }
     var parameterRun by remember { mutableStateOf(false) }
+    var consoleActions by remember { mutableStateOf(false) }
+    var showGenerated by remember { mutableStateOf(generated.isNotEmpty()) }
     val debugMarker = "DEPURACIÓN · LÍNEAS Y VARIABLES"
     val standardOutput = output.substringBefore(debugMarker).trim()
     val debugOutput = output.substringAfter(debugMarker, "").trim()
     val sectionOutput = when (consolePage) { "VARIABLES" -> debugOutput.ifBlank { "Ejecuta con DEBUG para inspeccionar líneas y variables." }; "ERROR" -> if (success == false) output else "No hay errores en la última ejecución."; else -> standardOutput.ifBlank { "✓ Programa terminado sin salida." } }
     val visibleOutput = if (consoleSearch.isBlank()) sectionOutput else sectionOutput.lineSequence().filter { it.contains(consoleSearch, true) }.joinToString("\n").ifBlank { "Sin coincidencias." }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) { Text("CONSOLA", fontWeight = FontWeight.Black, fontSize = 28.sp); Spacer(Modifier.weight(1f)); IconButton(onClick = { showHistory = true }) { Icon(Icons.Outlined.History, "Historial") }; Surface(color = when { running -> Yellow; success == true -> Green; success == false -> Pink; else -> Blue }, shape = RoundedCornerShape(0.dp), border = BorderStroke(2.dp, Ink)) { Text(if (running) "EJECUTANDO" else if (success == false) "ERROR" else "LISTO", Modifier.padding(8.dp, 4.dp), fontWeight = FontWeight.Black) } }
+        Row(verticalAlignment = Alignment.CenterVertically) { Text("CONSOLA", fontWeight = FontWeight.Black, fontSize = 24.sp); Spacer(Modifier.weight(1f)); IconButton(onClick = { showHistory = true }) { Icon(Icons.Outlined.History, "Historial") }; Box { IconButton(onClick = { consoleActions = true }) { Icon(Icons.Outlined.MoreVert, "Más acciones") }; DropdownMenu(consoleActions, { consoleActions = false }) { DropdownMenuItem({ Text("Copiar sección") }, { consoleActions = false; clipboard.setText(AnnotatedString(sectionOutput)); android.widget.Toast.makeText(context, "Sección copiada", android.widget.Toast.LENGTH_SHORT).show() }, leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) }); DropdownMenuItem({ Text("Compartir log") }, { consoleActions = false; context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, report) }, "Compartir log")) }, leadingIcon = { Icon(Icons.Outlined.Share, null) }); DropdownMenuItem({ Text("Repetir con parámetros") }, { consoleActions = false; parameterRun = true }, enabled = !running, leadingIcon = { Icon(Icons.Outlined.Tune, null) }) } }; Surface(color = when { running -> Yellow; success == true -> Green; success == false -> Pink; else -> Blue }, shape = RoundedCornerShape(0.dp), border = BorderStroke(2.dp, Ink)) { Text(if (running) "EJECUTANDO" else if (success == false) "ERROR" else "LISTO", Modifier.padding(8.dp, 4.dp), fontWeight = FontWeight.Black, fontSize = 10.sp) } }
         Spacer(Modifier.height(10.dp)); Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) { listOf("SALIDA" to Green, "VARIABLES" to Blue, "ERROR" to Pink).forEach { (label, color) -> Surface(onClick = { consolePage = label }, color = if (consolePage == label) color else Color.White, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(0.dp)) { Text(label, Modifier.padding(horizontal = 10.dp, vertical = 6.dp), fontWeight = FontWeight.Black, fontSize = 10.sp) } } }
         OutlinedTextField(consoleSearch, { consoleSearch = it }, Modifier.fillMaxWidth(), label = { Text("Buscar en esta sección") }, singleLine = true)
         Spacer(Modifier.height(8.dp)); BrutalCard(Ink, Modifier.weight(1f)) { Text("$ python $fileName", color = Green, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Spacer(Modifier.height(12.dp)); Text(visibleOutput, color = Color.White, fontFamily = FontFamily.Monospace, modifier = Modifier.testTag("console-output").verticalScroll(rememberScrollState())) }
         Text("PANEL · ${generated.size} archivo(s) · ${formatBytes(generated.sumOf(File::length))} modificados · memoria app aprox. ${formatBytes(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())}", fontSize = 10.sp, fontWeight = FontWeight.Bold)
         if (explanation != null) { Spacer(Modifier.height(10.dp)); BrutalCard(Yellow) { Text("QUÉ SIGNIFICA", fontWeight = FontWeight.Black, fontSize = 11.sp); Text(explanation, fontWeight = FontWeight.Medium) } }
-        Spacer(Modifier.height(12.dp)); Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            BrutalButton("COPIAR SECCIÓN", Pink, Modifier.weight(1f)) { clipboard.setText(AnnotatedString(sectionOutput)); android.widget.Toast.makeText(context, "Sección copiada", android.widget.Toast.LENGTH_SHORT).show() }
-            BrutalButton("COMPARTIR", Green, Modifier.weight(1f)) { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, report) }, "Compartir log")) }
-        }
         if (errorLine != null) { Spacer(Modifier.height(10.dp)); BrutalButton("IR A LÍNEA $errorLine", Pink, Modifier.fillMaxWidth()) { onGoToLine(errorLine) } }
         if (generated.isNotEmpty()) {
-            Spacer(Modifier.height(10.dp))
-            Text("ARCHIVOS GENERADOS · ${generated.size}", fontWeight = FontWeight.Black, fontSize = 11.sp)
-            Spacer(Modifier.height(6.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Spacer(Modifier.height(8.dp))
+            Surface(onClick = { showGenerated = !showGenerated }, color = Blue, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) { Text("${if (showGenerated) "▾" else "▸"} ARCHIVOS GENERADOS · ${generated.size}", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Black, fontSize = 11.sp) }
+            if (showGenerated) LazyRow(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(generated, key = { it.path }) { file ->
                     BrutalCard(Blue, Modifier.width(292.dp)) {
                         Text(file.name, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, maxLines = 1)
                         Text(formatBytes(file.length()), fontSize = 10.sp)
-                        Spacer(Modifier.height(7.dp))
-                        BrutalButton("VER RESULTADO", Blue, Modifier.fillMaxWidth()) { onView(file) }
                         Spacer(Modifier.height(6.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            BrutalButton("GUARDAR", Yellow, Modifier.weight(1f)) { onSave(file) }
-                            BrutalButton("COMPARTIR", Green, Modifier.weight(1f)) { onShare(file) }
-                        }
+                        BrutalButton("VER RESULTADO", Blue, Modifier.fillMaxWidth()) { onView(file) }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton(onClick = { onSave(file) }) { Text("GUARDAR", color = Ink, fontWeight = FontWeight.Black) }; TextButton(onClick = { onShare(file) }) { Text("COMPARTIR", color = Ink, fontWeight = FontWeight.Black) } }
                     }
                 }
             }
         }
-        Spacer(Modifier.height(10.dp)); Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { BrutalButton("← EDITAR", Blue, Modifier.weight(1f), onClick = onBack); BrutalButton("↻ REPETIR", Yellow, Modifier.weight(1f), enabled = !running, onClick = onRun); BrutalButton("PARÁMETROS", Green, Modifier.weight(1f), enabled = !running) { parameterRun = true } }
+        Spacer(Modifier.height(8.dp)); Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { BrutalButton("← EDITAR", Blue, Modifier.weight(1f), onClick = onBack); BrutalButton("↻ REPETIR", Yellow, Modifier.weight(1f), enabled = !running, onClick = onRun) }
     }
     if (showHistory) HistoryDialog(
         sessions = sessions,
@@ -1129,11 +1172,11 @@ private fun interface ResourceImporter {
 }
 
 @Composable private fun BrutalCard(color: Color, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Box(modifier.fillMaxWidth().padding(end = 6.dp, bottom = 6.dp)) { Box(Modifier.matchParentSize().offset(6.dp, 6.dp).background(Ink)); Column(Modifier.fillMaxWidth().background(color).border(3.dp, Ink).padding(14.dp), content = content) }
+    Box(modifier.fillMaxWidth().padding(end = 4.dp, bottom = 4.dp)) { Box(Modifier.matchParentSize().offset(4.dp, 4.dp).background(Ink)); Column(Modifier.fillMaxWidth().background(color).border(2.dp, Ink).padding(12.dp), content = content) }
 }
 
 @Composable private fun BrutalButton(label: String, color: Color, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(onClick, modifier.heightIn(min = 42.dp), enabled = enabled, shape = RoundedCornerShape(0.dp), border = BorderStroke(2.dp, Ink), colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = Ink, disabledContainerColor = Color.LightGray)) { Text(label, fontWeight = FontWeight.Black, fontSize = 12.sp) }
+    Button(onClick, modifier.heightIn(min = 40.dp), enabled = enabled, shape = RoundedCornerShape(0.dp), border = BorderStroke(2.dp, Ink), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp), colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = Ink, disabledContainerColor = Color.LightGray)) { Text(label, fontWeight = FontWeight.Black, fontSize = 11.sp) }
 }
 
 @Composable private fun NewFileDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {

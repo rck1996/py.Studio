@@ -26,6 +26,8 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -81,6 +83,7 @@ internal fun NotebookScreen(
     var newDialog by remember { mutableStateOf(false) }
     var importError by remember { mutableStateOf<String?>(null) }
     var exportNotebook by remember { mutableStateOf<PixelNotebook?>(null) }
+    var renameNotebook by remember { mutableStateOf<PixelNotebook?>(null) }
     var actionsExpanded by remember { mutableStateOf(false) }
     var runningIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
@@ -207,18 +210,6 @@ internal fun NotebookScreen(
                     shape = RoundedCornerShape(0.dp),
                     border = BorderStroke(3.dp, NotebookInk),
                 ) { Text(notebook.name.uppercase(), color = NotebookInk, fontWeight = FontWeight.Black) }
-                if (false) DropdownMenu(expanded = selector, onDismissRequest = { selector = false }) {
-                    notebooks.forEach { item ->
-                        DropdownMenuItem(text = { Text(item.name) }, onClick = {
-                            notebook = item
-                            selector = false
-                        })
-                    }
-                    DropdownMenuItem(text = { Text("＋ NUEVO NOTEBOOK") }, onClick = {
-                        selector = false
-                        newDialog = true
-                    })
-                }
             }
             Spacer(Modifier.width(8.dp))
             NotebookButton("▶ TODO", NotebookGreen, enabled = runningIndex < 0) {
@@ -292,7 +283,9 @@ internal fun NotebookScreen(
                     cell = cell,
                     running = runningIndex == index,
                     canDelete = notebook.cells.size > 1,
-                    onSource = { source -> updateCell(index) { it.copy(source = source, status = NotebookCellStatus.Idle) } },
+                    onSource = { source ->
+                        persist(notebook.copy(cells = invalidateNotebookCellsAfterEdit(notebook.cells, index, source)))
+                    },
                     onType = {
                         updateCell(index) {
                             it.copy(
@@ -348,6 +341,13 @@ internal fun NotebookScreen(
                                 Text(item.name, fontWeight = FontWeight.Black, color = NotebookInk)
                                 Text("${item.cells.size} celdas", fontSize = 11.sp, color = NotebookInk)
                             }
+                            IconButton(onClick = { renameNotebook = item; selector = false }) { Icon(Icons.Outlined.Edit, "Renombrar notebook") }
+                            IconButton(onClick = {
+                                if (notebooks.size > 1 && store.delete(item)) {
+                                    notebooks = store.list()
+                                    if (item.id == notebook.id) notebook = notebooks.first()
+                                }
+                            }, enabled = notebooks.size > 1) { Icon(Icons.Outlined.Delete, "Eliminar notebook") }
                             NotebookButton("ABRIR", NotebookBlue) {
                                 notebook = item
                                 selector = false
@@ -387,6 +387,23 @@ internal fun NotebookScreen(
             dismissButton = { TextButton(onClick = { newDialog = false }) { Text("CANCELAR") } },
         )
     }
+    renameNotebook?.let { target ->
+        var name by remember(target.id) { mutableStateOf(target.name) }
+        AlertDialog(
+            onDismissRequest = { renameNotebook = null },
+            shape = RoundedCornerShape(0.dp),
+            containerColor = NotebookYellow,
+            title = { Text("RENOMBRAR NOTEBOOK", fontWeight = FontWeight.Black) },
+            text = { OutlinedTextField(name, { name = it }, label = { Text("Nombre") }, singleLine = true) },
+            confirmButton = { NotebookButton("GUARDAR", NotebookGreen, enabled = name.isNotBlank()) {
+                val renamed = store.save(target.copy(name = name))
+                notebooks = store.list()
+                if (notebook.id == renamed.id) notebook = renamed
+                renameNotebook = null
+            } },
+            dismissButton = { TextButton(onClick = { renameNotebook = null }) { Text("CANCELAR") } },
+        )
+    }
     importError?.let { message ->
         AlertDialog(
             onDismissRequest = { importError = null },
@@ -413,9 +430,11 @@ private fun NotebookCellCard(
 ) {
     val accent = if (cell.type == NotebookCellType.Code) NotebookBlue else NotebookPink
     var markdownPreview by remember(cell.id) { mutableStateOf(cell.type == NotebookCellType.Markdown) }
+    var actionsExpanded by remember(cell.id) { mutableStateOf(false) }
+    var outputExpanded by remember(cell.id) { mutableStateOf(true) }
     Surface(
         color = Color.White,
-        border = BorderStroke(3.dp, NotebookInk),
+        border = BorderStroke(2.dp, NotebookInk),
         shape = RoundedCornerShape(0.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -430,10 +449,15 @@ private fun NotebookCellCard(
                     Modifier.weight(1f),
                     fontWeight = FontWeight.Black,
                 )
-                TextButton(onClick = onType) { Text("CAMBIAR", fontSize = 10.sp, fontWeight = FontWeight.Black) }
-                IconButton(onClick = { onMove(-1) }, enabled = index > 0) { Icon(Icons.Outlined.ArrowUpward, "Subir") }
-                IconButton(onClick = { onMove(1) }) { Icon(Icons.Outlined.ArrowDownward, "Bajar") }
-                IconButton(onClick = onDelete, enabled = canDelete) { Icon(Icons.Outlined.Delete, "Eliminar") }
+                Box {
+                    IconButton(onClick = { actionsExpanded = true }) { Icon(Icons.Outlined.MoreVert, "Acciones de celda") }
+                    DropdownMenu(expanded = actionsExpanded, onDismissRequest = { actionsExpanded = false }) {
+                        DropdownMenuItem(text = { Text("Cambiar tipo de celda") }, onClick = { actionsExpanded = false; onType() })
+                        DropdownMenuItem(text = { Text("Mover arriba") }, enabled = index > 0, onClick = { actionsExpanded = false; onMove(-1) }, leadingIcon = { Icon(Icons.Outlined.ArrowUpward, null) })
+                        DropdownMenuItem(text = { Text("Mover abajo") }, onClick = { actionsExpanded = false; onMove(1) }, leadingIcon = { Icon(Icons.Outlined.ArrowDownward, null) })
+                        DropdownMenuItem(text = { Text("Eliminar") }, enabled = canDelete, onClick = { actionsExpanded = false; onDelete() }, leadingIcon = { Icon(Icons.Outlined.Delete, null) })
+                    }
+                }
             }
             if (cell.type == NotebookCellType.Code) {
                 OutlinedTextField(
@@ -451,6 +475,7 @@ private fun NotebookCellCard(
                         NotebookCellStatus.Running -> "EJECUTANDO"
                         NotebookCellStatus.Success -> "CORRECTO"
                         NotebookCellStatus.Error -> "ERROR"
+                        NotebookCellStatus.Stale -> "REQUIERE EJECUTAR"
                     }
                     Text(
                         state + (cell.durationMillis?.let { " · ${it} ms" } ?: ""),
@@ -459,13 +484,10 @@ private fun NotebookCellCard(
                     )
                 }
                 if (cell.output.isNotBlank()) {
-                    Text(
-                        cell.output,
-                        Modifier.fillMaxWidth().background(NotebookInk).padding(10.dp),
-                        color = Color.White,
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 12.sp,
-                    )
+                    Surface(onClick = { outputExpanded = !outputExpanded }, color = if (cell.status == NotebookCellStatus.Stale) NotebookYellow else NotebookPaper, border = BorderStroke(1.dp, NotebookInk), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) {
+                        Text("${if (outputExpanded) "▾" else "▸"} SALIDA${if (cell.status == NotebookCellStatus.Stale) " · DESACTUALIZADA" else ""}", Modifier.padding(8.dp, 5.dp), fontWeight = FontWeight.Black, fontSize = 10.sp)
+                    }
+                    if (outputExpanded) Text(cell.output, Modifier.fillMaxWidth().background(NotebookInk).padding(10.dp), color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
                 }
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

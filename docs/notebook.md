@@ -10,7 +10,7 @@ Notebook permite combinar explicación y análisis Python dentro de un proyecto,
 4. Usa **CELDA** para ejecutar una celda o **EJECUTAR TODO** para reconstruir el análisis completo.
 5. Consulta debajo de cada celda Python su salida, estado y duración.
 
-Las celdas pueden subirse, bajarse, eliminarse o cambiarse entre Python y Markdown.
+Las celdas pueden subirse, bajarse, eliminarse o cambiarse entre Python y Markdown desde su menú `⋮`. La salida puede plegarse para mantener visible el código importante.
 
 ## Importar, exportar y duplicar
 
@@ -19,6 +19,7 @@ La barra de herramientas permite:
 - importar archivos Jupyter `.ipynb` desde el almacenamiento del teléfono;
 - exportar el notebook actual a `.ipynb` compatible con Jupyter;
 - duplicar el notebook actual para crear una variante independiente.
+- renombrar o eliminar notebooks desde el selector, conservando siempre al menos uno.
 
 La conversión conserva las celdas Python y Markdown. Las salidas, gráficos incrustados y metadatos específicos del kernel no se exportan; las celdas se vuelven a ejecutar localmente en PixelPy.
 
@@ -37,6 +38,8 @@ print("Promedio:", sum(ventas) / len(ventas))
 ```
 
 Al volver a ejecutar una celda, PixelPy reconstruye primero las celdas Python anteriores. Esto evita depender de un estado oculto distinto del código visible. **EJECUTAR TODO** conserva una salida independiente para cada celda y se detiene ante el primer error.
+
+Cuando se modifica una celda anterior, las salidas posteriores se conservan como referencia pero aparecen marcadas como **desactualizadas** hasta volver a ejecutarlas. Así una salida histórica no se confunde con el código actual.
 
 Notebook utiliza el mismo coordinador de Python que Editor, DEBUG, REPL y Automatizaciones. Nunca se ejecutan dos scripts Python simultáneamente.
 

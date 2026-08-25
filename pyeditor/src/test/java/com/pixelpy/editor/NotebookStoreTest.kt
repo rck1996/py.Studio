@@ -50,4 +50,19 @@ class NotebookStoreTest {
         assertTrue(blocks.any { it is NotebookMarkdownBlock.Quote })
         assertTrue(blocks.any { it is NotebookMarkdownBlock.Code })
     }
+
+    @Test fun `editing an earlier cell marks later results as stale`() {
+        val cells = listOf(
+            NotebookCell(source = "x = 1", output = "", status = NotebookCellStatus.Success),
+            NotebookCell(type = NotebookCellType.Markdown, source = "Explicación"),
+            NotebookCell(source = "print(x)", output = "1", status = NotebookCellStatus.Success),
+        )
+
+        val changed = invalidateNotebookCellsAfterEdit(cells, 0, "x = 2")
+
+        assertEquals(NotebookCellStatus.Idle, changed[0].status)
+        assertEquals(NotebookCellStatus.Idle, changed[1].status)
+        assertEquals(NotebookCellStatus.Stale, changed[2].status)
+        assertEquals("1", changed[2].output)
+    }
 }
