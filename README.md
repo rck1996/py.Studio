@@ -35,13 +35,14 @@ La interfaz mantiene una sola acción principal visible por elemento. Compartir,
 
 <p align="center">
   <img src="docs/screenshots/projects.png" alt="Gestor de proyectos de PixelPy" width="31%" />
-  <img src="docs/screenshots/editor.png" alt="Editor multifichero de PixelPy" width="31%" />
+  <img src="docs/screenshots/editor.png" alt="Editor multifichero de PixelPy con teclado visible" width="31%" />
   <img src="docs/screenshots/console.png" alt="Consola de ejecución de PixelPy" width="31%" />
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/automation.png" alt="Configuración de automatizaciones de PixelPy" width="46%" />
-  <img src="docs/screenshots/widget.png" alt="Widget de resultados de PixelPy" width="46%" />
+  <img src="docs/screenshots/notebook.png" alt="Notebook local de PixelPy" width="31%" />
+  <img src="docs/screenshots/automation.png" alt="Configuración compacta de automatizaciones de PixelPy" width="31%" />
+  <img src="docs/screenshots/widget.png" alt="Widget de resultados de PixelPy" width="31%" />
 </p>
 
 <p align="center">
@@ -91,7 +92,7 @@ El APK se genera en `pyeditor/build/outputs/apk/development/debug/`.
 
 ## Versión
 
-La versión estable actual es `1.6.0`, con importación/exportación Jupyter y explorador responsive de notebooks.
+La versión estable actual es `1.6.0`, con importación/exportación Jupyter, explorador responsive de notebooks y una interfaz compacta validada en Pixel 6/API 35.
 
 Las ejecuciones programadas son aproximadas: Android puede retrasarlas por batería, Doze o restricciones del sistema.
 
