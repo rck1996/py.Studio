@@ -12,6 +12,8 @@ Notebook permite combinar explicación y análisis Python dentro de un proyecto,
 
 Las celdas pueden subirse, bajarse, eliminarse o cambiarse entre Python y Markdown desde su menú `⋮`. La salida puede plegarse para mantener visible el código importante.
 
+El selector permite buscar por nombre cuando el proyecto contiene muchos notebooks. El documento en uso aparece resaltado con **ACTIVO** y no puede volver a abrirse por accidente. Las acciones de renombrar, eliminar y abrir se distribuyen en dos filas para seguir siendo utilizables en pantallas angostas.
+
 ## Importar, exportar y duplicar
 
 La barra de herramientas permite:
@@ -19,7 +21,8 @@ La barra de herramientas permite:
 - importar archivos Jupyter `.ipynb` desde el almacenamiento del teléfono;
 - exportar el notebook actual a `.ipynb` compatible con Jupyter;
 - duplicar el notebook actual para crear una variante independiente.
-- renombrar o eliminar notebooks desde el selector, conservando siempre al menos uno.
+- renombrar o eliminar notebooks desde el selector, conservando siempre al menos uno;
+- buscar rápidamente un notebook por su nombre.
 
 La conversión conserva las celdas Python y Markdown. Las salidas, gráficos incrustados y metadatos específicos del kernel no se exportan; las celdas se vuelven a ejecutar localmente en PixelPy.
 

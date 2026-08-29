@@ -92,7 +92,7 @@ El APK se genera en `pyeditor/build/outputs/apk/development/debug/`.
 
 ## Versión
 
-La versión estable actual es `1.6.0`, con importación/exportación Jupyter, explorador responsive de notebooks y una interfaz compacta validada en Pixel 6/API 35.
+La versión estable actual es `1.6.1`, con importación/exportación Jupyter, búsqueda y gestión responsive de notebooks, y una interfaz compacta validada en Pixel 6/API 35.
 
 Las ejecuciones programadas son aproximadas: Android puede retrasarlas por batería, Doze o restricciones del sistema.
 

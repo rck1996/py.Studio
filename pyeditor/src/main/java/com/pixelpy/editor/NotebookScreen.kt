@@ -77,14 +77,16 @@ internal fun NotebookScreen(
     onArtifactsChanged: () -> Unit,
 ) {
     val store = remember(project) { NotebookStore(project) }
+    val initialNotebook = remember(project) { store.getOrCreate() }
     var notebooks by remember(project) { mutableStateOf(store.list()) }
-    var notebook by remember(project) { mutableStateOf(store.getOrCreate()) }
+    var notebook by remember(project) { mutableStateOf(initialNotebook) }
     var selector by remember { mutableStateOf(false) }
     var newDialog by remember { mutableStateOf(false) }
     var importError by remember { mutableStateOf<String?>(null) }
     var exportNotebook by remember { mutableStateOf<PixelNotebook?>(null) }
     var renameNotebook by remember { mutableStateOf<PixelNotebook?>(null) }
     var actionsExpanded by remember { mutableStateOf(false) }
+    var notebookQuery by remember { mutableStateOf("") }
     var runningIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -205,7 +207,7 @@ internal fun NotebookScreen(
             Spacer(Modifier.width(8.dp))
             Box(Modifier.weight(1f)) {
                 OutlinedButton(
-                    onClick = { selector = true },
+                    onClick = { notebookQuery = ""; selector = true },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(0.dp),
                     border = BorderStroke(3.dp, NotebookInk),
@@ -330,27 +332,66 @@ internal fun NotebookScreen(
             containerColor = NotebookPaper,
             title = { Text("MIS NOTEBOOKS", fontWeight = FontWeight.Black) },
             text = {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    itemsIndexed(notebooks, key = { _, item -> item.id }) { _, item ->
-                        Row(
-                            Modifier.fillMaxWidth().background(if (item.id == notebook.id) NotebookYellow else Color.White)
-                                .border(2.dp, NotebookInk).padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(item.name, fontWeight = FontWeight.Black, color = NotebookInk)
-                                Text("${item.cells.size} celdas", fontSize = 11.sp, color = NotebookInk)
-                            }
-                            IconButton(onClick = { renameNotebook = item; selector = false }) { Icon(Icons.Outlined.Edit, "Renombrar notebook") }
-                            IconButton(onClick = {
-                                if (notebooks.size > 1 && store.delete(item)) {
-                                    notebooks = store.list()
-                                    if (item.id == notebook.id) notebook = notebooks.first()
+                val visibleNotebooks = notebooks.filter { it.name.contains(notebookQuery, ignoreCase = true) }
+                Column {
+                    OutlinedTextField(
+                        value = notebookQuery,
+                        onValueChange = { notebookQuery = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Buscar notebook") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(0.dp),
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 420.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        itemsIndexed(visibleNotebooks, key = { _, item -> item.id }) { _, item ->
+                            val isActive = item.id == notebook.id
+                            Column(
+                                Modifier.fillMaxWidth().background(if (item.id == notebook.id) NotebookYellow else Color.White)
+                                    .border(2.dp, NotebookInk).padding(10.dp),
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(item.name, fontWeight = FontWeight.Black, color = NotebookInk)
+                                        Text("${item.cells.size} celdas", fontSize = 11.sp, color = NotebookInk)
+                                    }
+                                    if (isActive) {
+                                        Text(
+                                            "ACTIVO",
+                                            modifier = Modifier.border(2.dp, NotebookInk).padding(horizontal = 6.dp, vertical = 2.dp),
+                                            color = NotebookInk,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Black,
+                                        )
+                                    }
                                 }
-                            }, enabled = notebooks.size > 1) { Icon(Icons.Outlined.Delete, "Eliminar notebook") }
-                            NotebookButton("ABRIR", NotebookBlue) {
-                                notebook = item
-                                selector = false
+                                Spacer(Modifier.size(6.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    IconButton(onClick = { renameNotebook = item; selector = false }) { Icon(Icons.Outlined.Edit, "Renombrar notebook") }
+                                    IconButton(onClick = {
+                                        if (notebooks.size > 1 && store.delete(item)) {
+                                            notebooks = store.list()
+                                            if (item.id == notebook.id) notebook = notebooks.first()
+                                        }
+                                    }, enabled = notebooks.size > 1) { Icon(Icons.Outlined.Delete, "Eliminar notebook") }
+                                    Spacer(Modifier.weight(1f))
+                                    NotebookButton(if (isActive) "ABIERTO" else "ABRIR", NotebookBlue, enabled = !isActive) {
+                                        notebook = item
+                                        selector = false
+                                    }
+                                }
+                            }
+                        }
+                        if (visibleNotebooks.isEmpty()) {
+                            item {
+                                Text("No hay notebooks que coincidan.", color = NotebookInk, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -363,9 +404,7 @@ internal fun NotebookScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { selector = false }) {
-                    Text("CERRAR", color = NotebookInk, fontWeight = FontWeight.Black)
-                }
+                NotebookButton("CERRAR", Color.White) { selector = false }
             },
         )
     }
@@ -384,7 +423,7 @@ internal fun NotebookScreen(
                     newDialog = false
                 }
             },
-            dismissButton = { TextButton(onClick = { newDialog = false }) { Text("CANCELAR") } },
+            dismissButton = { NotebookButton("CANCELAR", Color.White) { newDialog = false } },
         )
     }
     renameNotebook?.let { target ->
@@ -401,7 +440,7 @@ internal fun NotebookScreen(
                 if (notebook.id == renamed.id) notebook = renamed
                 renameNotebook = null
             } },
-            dismissButton = { TextButton(onClick = { renameNotebook = null }) { Text("CANCELAR") } },
+            dismissButton = { NotebookButton("CANCELAR", Color.White) { renameNotebook = null } },
         )
     }
     importError?.let { message ->

@@ -52,9 +52,13 @@ jobs:
           } > keystore.properties
       - run: chmod +x gradlew
       - run: ./gradlew :pyeditor:assembleProductionRelease
+      - name: Read release version
+        id: version
+        shell: bash
+        run: echo "name=$(grep -o 'versionName = "[^"]*"' pyeditor/build.gradle.kts | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
-          name: pixelpy-1.6.0-release
+          name: pixelpy-${{ steps.version.outputs.name }}-release
           path: pyeditor/build/outputs/apk/production/release/*.apk
       - name: Remove signing material
         if: always()

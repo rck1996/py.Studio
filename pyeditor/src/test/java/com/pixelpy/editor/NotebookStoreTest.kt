@@ -25,6 +25,19 @@ class NotebookStoreTest {
         assertEquals("42", restored.cells.single().output)
     }
 
+    @Test fun `multiple notebooks remain available after reopening the project`() {
+        val project = Files.createTempDirectory("notebook-list").toFile()
+        val store = NotebookStore(project)
+        val initial = store.getOrCreate()
+        val second = store.save(PixelNotebook(name = "Análisis de ventas"))
+
+        val restored = NotebookStore(project).list()
+
+        assertEquals(2, restored.size)
+        assertTrue(restored.any { it.id == initial.id })
+        assertTrue(restored.any { it.id == second.id && it.name == "Análisis de ventas" })
+    }
+
     @Test fun `cumulative source shares previous code and ignores markdown`() {
         val cells = listOf(
             NotebookCell(source = "x = 4"),
