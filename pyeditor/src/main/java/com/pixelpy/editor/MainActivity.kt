@@ -158,6 +158,9 @@ class MainActivity : ComponentActivity() {
     var resourceVersion by remember { mutableIntStateOf(0) }
     var resourceImportFolder by remember { mutableStateOf("") }
     var projectVersion by remember { mutableIntStateOf(0) }
+    val backupStore = remember { ProjectBackupStore(File(context.filesDir, "project-backups")) }
+    var showBackups by remember { mutableStateOf(false) }
+    var backupVersion by remember { mutableIntStateOf(0) }
     var replEntries by remember { mutableStateOf<List<ReplEntry>>(emptyList()) }
     var inputBridge by remember { mutableStateOf<InputBridge?>(null) }
     var pendingPrompt by remember { mutableStateOf<String?>(null) }
@@ -619,7 +622,7 @@ class MainActivity : ComponentActivity() {
                         requestedAutomationRequest = automationFocusRequest,
                     )
                 } else when (tab) {
-                    Tab.Projects -> Projects(remember(projectVersion) { projectsRoot.listFiles { f -> f.isDirectory }?.sortedBy { it.name } ?: emptyList() }, dir, files, remember(dir, resourceVersion) { dir.walkTopDown().filter { f -> f.isFile && f.extension != "py" && !f.invariantSeparatorsPath.contains("/.trash/") && !f.invariantSeparatorsPath.contains("/.versions/") }.sortedBy { it.relativeTo(dir).invariantSeparatorsPath }.toList() }, current, onProject = ::switchProject, onNewProject = { newProjectDialog = true }, onImportProject = { projectImportLauncher.launch(arrayOf("application/zip", "application/octet-stream")) }, onExportProject = { project ->
+                    Tab.Projects -> Projects(remember(projectVersion) { projectsRoot.listFiles { f -> f.isDirectory }?.sortedBy { it.name } ?: emptyList() }, dir, files, remember(dir, resourceVersion) { dir.walkTopDown().filter { f -> f.isFile && f.extension != "py" && !f.invariantSeparatorsPath.contains("/.trash/") && !f.invariantSeparatorsPath.contains("/.versions/") }.sortedBy { it.relativeTo(dir).invariantSeparatorsPath }.toList() }, current, onProject = ::switchProject, onNewProject = { newProjectDialog = true }, onImportProject = { projectImportLauncher.launch(arrayOf("application/zip", "application/octet-stream")) }, onBackups = { showBackups = true }, onExportProject = { project ->
                         transition {
                             val zip = File(context.cacheDir, project.name + ".zip")
                             if (!exportProjectToZip(project, dir, current, zip, ::flushPendingSave)) return@transition
@@ -800,6 +803,27 @@ class MainActivity : ComponentActivity() {
             newProjectDialog = false
         }
     }
+    if (showBackups) ProjectBackupsDialog(
+        project = dir,
+        backups = remember(dir, backupVersion) { backupStore.list(dir) },
+        onDismiss = { showBackups = false },
+        onCreate = {
+            transition {
+                if (!flushPendingSave(current)) return@transition
+                runCatching { withContext(Dispatchers.IO) { backupStore.create(dir) } }
+                    .onSuccess { backupVersion++; android.widget.Toast.makeText(context, "Respaldo creado", android.widget.Toast.LENGTH_SHORT).show() }
+                    .onFailure { android.widget.Toast.makeText(context, "No se pudo crear el respaldo", android.widget.Toast.LENGTH_LONG).show() }
+            }
+        },
+        onRestore = { backup ->
+            transition {
+                if (!flushPendingSave(current)) return@transition
+                runCatching { withContext(Dispatchers.IO) { backupStore.restore(dir, backup) } }
+                    .onSuccess { backupVersion++; resourceVersion++; switchProjectNow(dir); android.widget.Toast.makeText(context, "Proyecto restaurado", android.widget.Toast.LENGTH_SHORT).show() }
+                    .onFailure { android.widget.Toast.makeText(context, "No se pudo restaurar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
+            }
+        },
+    )
     pendingPrompt?.let { question ->
         InputDialog(question, onSubmit = { answer -> pendingPrompt = null; inputBridge?.submit(answer) })
     }
@@ -824,7 +848,47 @@ private fun interface ResourceImporter {
     operator fun invoke(folder: String = "") = importInto(folder)
 }
 
-@Composable private fun Projects(projects: List<File>, selectedProject: File, files: List<File>, resources: List<File>, current: File, onProject: (File) -> Unit, onNewProject: () -> Unit, onImportProject: () -> Unit, onExportProject: (File) -> Unit, onOpen: (File) -> Unit, onNew: () -> Unit, onImport: () -> Unit, onImportResource: ResourceImporter, onDelete: (File) -> Unit, onDeleteResource: (File) -> Unit, onTrashChanged: () -> Unit, onRename: (File, String) -> Unit, onDuplicate: (File) -> Unit, onShare: (File) -> Unit, onAutomations: () -> Unit, onNotebook: () -> Unit, onPreferences: () -> Unit, onPreviewResource: (File) -> Unit, onResourcePathsChanged: (Map<String, String>) -> Unit, onTemplate: (ScriptTemplate) -> Unit) {
+@Composable private fun ProjectBackupsDialog(project: File, backups: List<ProjectBackup>, onDismiss: () -> Unit, onCreate: () -> Unit, onRestore: (ProjectBackup) -> Unit) {
+    var restoreTarget by remember { mutableStateOf<ProjectBackup?>(null) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(0.dp),
+        containerColor = Paper,
+        title = { Text("RESPALDOS · ${project.name.uppercase()}", fontWeight = FontWeight.Black) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Se conservan los 5 más recientes, incluidos notebooks y archivos ocultos.", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                if (backups.isEmpty()) Text("Todavía no hay respaldos.")
+                LazyColumn(Modifier.heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                    items(backups, key = { it.file.path }) { backup ->
+                        Row(Modifier.fillMaxWidth().background(Color.White).border(2.dp, Ink).padding(9.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(java.text.SimpleDateFormat("dd-MM-yyyy · HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(backup.createdAtMillis)), fontWeight = FontWeight.Black)
+                                Text(humanFileSize(backup.sizeBytes), fontSize = 11.sp)
+                            }
+                            TextButton(onClick = { restoreTarget = backup }) { Text("RESTAURAR", fontWeight = FontWeight.Black) }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { BrutalButton("＋ CREAR RESPALDO", Green) { onCreate() } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("CERRAR", fontWeight = FontWeight.Black) } },
+    )
+    restoreTarget?.let { backup ->
+        AlertDialog(
+            onDismissRequest = { restoreTarget = null },
+            shape = RoundedCornerShape(0.dp),
+            containerColor = Yellow,
+            title = { Text("¿RESTAURAR RESPALDO?", fontWeight = FontWeight.Black) },
+            text = { Text("El estado actual se respaldará primero. Luego se reemplazará el contenido del proyecto.") },
+            confirmButton = { BrutalButton("RESTAURAR", Green) { restoreTarget = null; onRestore(backup) } },
+            dismissButton = { TextButton(onClick = { restoreTarget = null }) { Text("CANCELAR") } },
+        )
+    }
+}
+
+@Composable private fun Projects(projects: List<File>, selectedProject: File, files: List<File>, resources: List<File>, current: File, onProject: (File) -> Unit, onNewProject: () -> Unit, onImportProject: () -> Unit, onBackups: () -> Unit, onExportProject: (File) -> Unit, onOpen: (File) -> Unit, onNew: () -> Unit, onImport: () -> Unit, onImportResource: ResourceImporter, onDelete: (File) -> Unit, onDeleteResource: (File) -> Unit, onTrashChanged: () -> Unit, onRename: (File, String) -> Unit, onDuplicate: (File) -> Unit, onShare: (File) -> Unit, onAutomations: () -> Unit, onNotebook: () -> Unit, onPreferences: () -> Unit, onPreviewResource: (File) -> Unit, onResourcePathsChanged: (Map<String, String>) -> Unit, onTemplate: (ScriptTemplate) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var renameTarget by remember { mutableStateOf<File?>(null) }
     var packages by remember { mutableStateOf(false) }
@@ -870,6 +934,7 @@ private fun interface ResourceImporter {
                         DropdownMenuItem(text = { Text("Importar archivo .py") }, onClick = { projectActions = false; onImport() }, leadingIcon = { Icon(Icons.Outlined.FileOpen, null) })
                         DropdownMenuItem(text = { Text("Importar proyecto ZIP") }, onClick = { projectActions = false; onImportProject() }, leadingIcon = { Icon(Icons.Outlined.FolderZip, null) })
                         DropdownMenuItem(text = { Text("Exportar proyecto ZIP") }, onClick = { projectActions = false; onExportProject(selectedProject) }, leadingIcon = { Icon(Icons.Outlined.Archive, null) })
+                        DropdownMenuItem(text = { Text("Respaldos del proyecto") }, onClick = { projectActions = false; onBackups() }, leadingIcon = { Icon(Icons.Outlined.History, null) })
                         DropdownMenuItem(text = { Text("Librerías incluidas") }, onClick = { projectActions = false; packages = true }, leadingIcon = { Icon(Icons.Outlined.Extension, null) })
                         DropdownMenuItem(text = { Text("Papelera") }, onClick = { projectActions = false; trash = true }, leadingIcon = { Icon(Icons.Outlined.Delete, null) })
                     }
@@ -1194,18 +1259,46 @@ private fun interface ResourceImporter {
     AlertDialog(onDismissRequest = onDismiss, containerColor = Pink, shape = RoundedCornerShape(0.dp), title = { Text("NUEVO PROYECTO", fontWeight = FontWeight.Black) }, text = { Column { Text("Creará una carpeta independiente para sus módulos y archivos."); Spacer(Modifier.height(10.dp)); OutlinedTextField(name, { name = it }, label = { Text("Nombre") }, singleLine = true) } }, confirmButton = { BrutalButton("CREAR PROYECTO", Green, enabled = name.isNotBlank()) { onCreate(name) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("CANCELAR", color = Ink, fontWeight = FontWeight.Black) } })
 }
 
-@Composable private fun PackagesDialog(onDismiss: () -> Unit) {
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Paper, shape = RoundedCornerShape(0.dp), title = { Text("LIBRERÍAS", fontWeight = FontWeight.Black) }, text = { Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        PackageRow("requests", "2.34.2", "APIs, descargas y HTTP")
-        PackageRow("beautifulsoup4", "4.15.0", "HTML y scraping")
-        PackageRow("openpyxl", "3.1.5", "Leer y crear Excel")
-        PackageRow("defusedxml", "0.7.1", "XML más seguro")
-        Text("También está disponible toda la biblioteca estándar de Python 3.13.", fontSize = 12.sp)
-    } }, confirmButton = { BrutalButton("ENTENDIDO", Yellow, onClick = onDismiss) })
-}
+private data class LibraryProfile(val name: String, val description: String, val modules: List<String>)
+private val LIBRARY_PROFILES = listOf(
+    LibraryProfile("CORE", "CSV, JSON, fechas y archivos", listOf("csv", "json", "datetime", "pathlib")),
+    LibraryProfile("WEB", "requests + BeautifulSoup", listOf("requests", "bs4")),
+    LibraryProfile("EXCEL", "openpyxl + XML seguro", listOf("openpyxl", "defusedxml")),
+    LibraryProfile("DATA LAB", "Resultados y gráficos SVG locales", listOf("pixelpy_chart")),
+)
 
-@Composable private fun PackageRow(name: String, version: String, description: String) {
-    Row(Modifier.fillMaxWidth().background(Color.White).border(2.dp, Ink).padding(10.dp), verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(38.dp).background(Blue).border(2.dp, Ink), contentAlignment = Alignment.Center) { Text("PY", fontWeight = FontWeight.Black) }; Spacer(Modifier.width(10.dp)); Column { Text("$name  $version", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Text(description, fontSize = 12.sp) } }
+@Composable private fun PackagesDialog(onDismiss: () -> Unit) {
+    var validation by remember { mutableStateOf<Map<String, Boolean?>>(emptyMap()) }
+    LaunchedEffect(Unit) {
+        validation = LIBRARY_PROFILES.associate { it.name to null }
+        validation = withContext(Dispatchers.Default) {
+            PythonRuntimeCoordinator.runExclusive {
+                val importer = Python.getInstance().getModule("builtins").get("__import__")
+                LIBRARY_PROFILES.associate { profile ->
+                    profile.name to runCatching { profile.modules.forEach { importer?.call(it) } }.isSuccess
+                }
+            }
+        }
+    }
+    AlertDialog(onDismissRequest = onDismiss, containerColor = Paper, shape = RoundedCornerShape(0.dp), title = { Text("PERFILES DE LIBRERÍAS", fontWeight = FontWeight.Black) }, text = {
+        LazyColumn(Modifier.heightIn(max = 440.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            items(LIBRARY_PROFILES, key = { it.name }) { profile ->
+                val state = validation[profile.name]
+                Row(Modifier.fillMaxWidth().background(Color.White).border(2.dp, Ink).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(42.dp).background(if (state == true) Green else if (state == false) Pink else Yellow).border(2.dp, Ink), contentAlignment = Alignment.Center) {
+                        Text(if (state == true) "✓" else if (state == false) "!" else "…", fontWeight = FontWeight.Black)
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(profile.name, fontWeight = FontWeight.Black)
+                        Text(profile.description, fontSize = 12.sp)
+                        Text(profile.modules.joinToString(), fontFamily = FontFamily.Monospace, fontSize = 10.sp)
+                    }
+                }
+            }
+            item { Text("Perfiles incluidos y probados dentro de la app. PixelPy no instala paquetes libres en tiempo de ejecución.", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+        }
+    }, confirmButton = { BrutalButton("CERRAR", Yellow, onClick = onDismiss) })
 }
 
 @Composable private fun HistoryDialog(

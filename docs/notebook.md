@@ -8,7 +8,7 @@ Notebook permite combinar explicación y análisis Python dentro de un proyecto,
 2. Elige un notebook existente o crea uno desde el selector superior.
 3. Añade una celda de **CÓDIGO** o **MARKDOWN**.
 4. Usa **CELDA** para ejecutar una celda o **EJECUTAR TODO** para reconstruir el análisis completo.
-5. Consulta debajo de cada celda Python su salida, estado y duración.
+5. Consulta debajo de cada celda Python su salida, resultados enriquecidos, estado y duración.
 
 Las celdas pueden subirse, bajarse, eliminarse o cambiarse entre Python y Markdown desde su menú `⋮`. La salida puede plegarse para mantener visible el código importante.
 
@@ -58,6 +58,20 @@ El código se ejecuta en la carpeta del proyecto activo. Los archivos creados o 
 
 El visor CSV muestra una tabla desplazable con búsqueda, filas y columnas. Los archivos grandes siguen limitados para evitar bloqueos; el archivo completo puede abrirse externamente.
 
+`display(valor)` permite presentar datos sin convertirlos manualmente a texto. PixelPy reconoce tablas, JSON y valores simples. Los resultados se guardan de forma estructurada y permanecen asociados a la celda que los produjo. Los archivos nuevos también aparecen en esa celda con su vista previa integrada.
+
+El inspector **VARIABLES** resume los valores compartidos sin intentar mostrar objetos completos o estructuras enormes. Limita profundidad, cantidad y longitud para mantener fluida la interfaz.
+
+## Gráficos desde CSV
+
+En **ACCIONES ▾ → CREAR GRÁFICO** puedes elegir un CSV del proyecto, las columnas X/Y y el tipo línea, barras o puntos. PixelPy añade una celda Python editable y reproducible que genera un SVG local mediante `pixelpy_chart`; no requiere Internet ni Matplotlib. El SVG aparece como resultado de la misma celda y también en Recursos.
+
+En pantallas amplias la acción se muestra directamente; en teléfonos queda dentro del menú desplegable para evitar botones estrechos.
+
+## Respaldos
+
+Desde las acciones del proyecto se puede crear o restaurar un respaldo. Incluye scripts, recursos, notebooks y datos ocultos del proyecto. PixelPy conserva los cinco más recientes, valida las rutas del ZIP y crea un respaldo del estado actual antes de restaurar otro.
+
 ## Límites actuales
 
 - `input()` no abre diálogos dentro de Notebook y produce un error claro en la celda que lo solicita.
@@ -67,4 +81,4 @@ El visor CSV muestra una tabla desplazable con búsqueda, filas y columnas. Los 
 
 ## Persistencia y privacidad
 
-PixelPy guarda el documento de forma atómica dentro del proyecto privado. El notebook incluye sus celdas, Markdown, salida, estado y duración. No se envía contenido a Internet salvo que el propio código Python realice una solicitud de red.
+PixelPy guarda el documento de forma atómica dentro del proyecto privado. El notebook incluye sus celdas, Markdown, salida, resultados estructurados, estado y duración. Los documentos anteriores se migran automáticamente al abrirlos. No se envía contenido a Internet salvo que el propio código Python realice una solicitud de red.

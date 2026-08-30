@@ -37,6 +37,7 @@ Cada ejecución manual también crea una sesión local independiente. El histori
 - ZIP muestra hasta 500 entradas sin extraer contenido.
 - Excel permite cambiar de hoja, buscar filas, consultar fórmulas y reconocer paneles congelados en las primeras 200 filas.
 - Los HTML generados por Plotly se abren como gráficos interactivos dentro de PixelPy.
+- Los SVG generados por Data Lab se abren como gráficos locales escalables dentro de PixelPy.
 
 Los libros complejos, fórmulas, estilos avanzados y formatos no compatibles pueden abrirse con **OTRA APP**.
 
@@ -54,6 +55,7 @@ El editor visual permite definir cada parámetro como texto, número, sí/no o s
 | JSON | Árbol interactivo con objetos y listas plegables y tipos diferenciados por color |
 | CSV | Tabla con encabezados, filas alternadas y hasta 200 registros |
 | PNG, JPG, JPEG, WebP | Vista de imagen |
+| SVG | Gráfico local escalable |
 | PDF, XLS, XLSX, ZIP y otros | Información del archivo y apertura con otra aplicación |
 
 La lectura de texto se limita a 1 MB. El archivo completo permanece disponible mediante **OTRA APP** o **COMPARTIR**.

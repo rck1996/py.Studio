@@ -10,7 +10,8 @@ Editor y entorno de ejecución de Python para Android, diseñado para trabajar d
 - Consola separada en salida, variables y errores.
 - REPL persistente por proyecto.
 - Importación y exportación de proyectos ZIP.
-- Incluye `requests`, `beautifulsoup4`, `openpyxl` y `defusedxml`.
+- Respaldos completos por proyecto, restauración validada y retención automática de las cinco versiones más recientes.
+- Perfiles de librerías integrados y comprobados en la app: Core, Web, Excel y Data Lab.
 - Autosave seguro con recuperación de proyecto, archivo, pestaña y cursor.
 - Automatizaciones únicas, diarias o semanales mediante WorkManager, con restricciones de red, carga y batería.
 - Publicación segura de resultados y widget para consultar el estado, ejecutar el script y ver el último archivo generado.
@@ -23,7 +24,7 @@ Editor y entorno de ejecución de Python para Android, diseñado para trabajar d
 - Plantillas favoritas para APIs, CSV, Excel, gráficos, scraping y automatizaciones.
 - Gestor de recursos con carpetas visibles aunque estén vacías, importación al destino elegido, selección múltiple, movimiento y renombrado seguros, rutas relativas copiables, papelera y vista previa.
 - Al mover o renombrar un resultado destacado, PixelPy actualiza automáticamente la automatización que lo utiliza.
-- Notebook local por proyecto con celdas Python y Markdown, variables compartidas en orden, ejecución individual o completa, salida y duración por celda, reordenamiento y guardado automático.
+- Notebook local por proyecto con resultados estructurados, inspector resumido de variables, archivos asociados a su celda y constructor de gráficos SVG desde CSV.
 - Interfaz compacta por contexto: Scripts y Recursos separados, acciones secundarias en menús, editor optimizado para el teclado y resultados plegables.
 - Tema oscuro, contraste alto y tres densidades de interfaz.
 - Diagnóstico de automatizaciones con historial local, causa visible en el widget, reintento y copia del reporte.
@@ -65,6 +66,7 @@ El botón **VER RESULTADO** del widget, **ABRIR RESULTADO** en automatizaciones 
 - JSON se presenta como un árbol interactivo con objetos y listas plegables.
 - CSV se muestra como tabla filtrable con encabezados, filas alternadas y desplazamiento horizontal.
 - PNG, JPG, JPEG y WebP permiten zoom táctil dentro de PixelPy.
+- SVG y HTML se previsualizan como gráficos locales dentro de PixelPy.
 - ZIP muestra su contenido sin extraerlo y XLSX ofrece una vista básica de la primera hoja.
 - PDF y formatos desconocidos ofrecen **OTRA APP**.
 - Todos los formatos pueden compartirse desde el visor.
@@ -92,7 +94,7 @@ El APK se genera en `pyeditor/build/outputs/apk/development/debug/`.
 
 ## Versión
 
-La versión estable actual es `1.6.1`, con importación/exportación Jupyter, búsqueda y gestión responsive de notebooks, y una interfaz compacta validada en Pixel 6/API 35.
+La versión estable actual es `1.7.0`, centrada en Data Lab: resultados estructurados, gráficos SVG desde CSV, inspector de variables, respaldos y perfiles de librerías validados.
 
 Las ejecuciones programadas son aproximadas: Android puede retrasarlas por batería, Doze o restricciones del sistema.
 

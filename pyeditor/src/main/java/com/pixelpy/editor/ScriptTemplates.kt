@@ -29,14 +29,15 @@ hoja.freeze_panes = "A2"
 libro.save("reporte.xlsx")
 print("reporte.xlsx generado")
 """),
-    ScriptTemplate("chart", "Gráfico Plotly", "Crea un HTML interactivo sin servidor.", "grafico_plotly.py", """import json
+    ScriptTemplate("chart", "Gráfico SVG local", "Crea un gráfico rápido, editable y sin internet.", "grafico_svg.py", """from pixelpy_chart import chart
 
-datos = [{"x": ["A", "B", "C"], "y": [4, 7, 3], "type": "bar"}]
-html = f'''<html><body><div id="grafico"></div>
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-<script>Plotly.newPlot("grafico", {json.dumps(datos)});</script></body></html>'''
-open("grafico.html", "w", encoding="utf-8").write(html)
-print("grafico.html generado")
+datos = [
+    {"mes": "Ene", "ventas": 12},
+    {"mes": "Feb", "ventas": 18},
+    {"mes": "Mar", "ventas": 15},
+]
+chart(datos, "mes", "ventas", kind="bar", title="Ventas", output="grafico.svg")
+print("grafico.svg generado")
 """),
     ScriptTemplate("scraping", "Extraer una web", "Obtiene título y enlaces con BeautifulSoup.", "scraping.py", """import requests
 from bs4 import BeautifulSoup

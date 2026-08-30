@@ -1,4 +1,5 @@
 import builtins
+import json
 import os
 import sys
 import tempfile
@@ -9,6 +10,7 @@ from pathlib import Path
 PYTHON_DIR = Path(__file__).resolve().parents[2] / "main" / "python"
 sys.path.insert(0, str(PYTHON_DIR))
 import runner
+import pixelpy_chart
 
 
 class Bridge:
@@ -28,6 +30,18 @@ class Bridge:
 
 
 class RunnerTests(unittest.TestCase):
+    def test_svg_chart_is_generated_and_escaped(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "chart.svg"
+            result = pixelpy_chart.chart(
+                [{"mes": "Ene", "ventas": "12"}, {"mes": "Feb", "ventas": "18"}],
+                "mes", "ventas", title="Ventas <2026>", output=output,
+            )
+            content = output.read_text(encoding="utf-8")
+            self.assertEqual(str(output), result)
+            self.assertIn("<svg", content)
+            self.assertIn("Ventas &lt;2026&gt;", content)
+
     def execute(self, source, filename="main.py", bridge=None, timeout=120, debug=False):
         return runner.execute(
             source,
@@ -139,6 +153,28 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual([], runner.analyze("x = 1"))
         issue = runner.analyze("if:", "nombre_real.py")[0]
         self.assertTrue(issue.startswith("ERROR|1|"))
+
+    def test_notebook_display_variables_and_files_are_bounded_per_cell(self):
+        result = runner.notebook_run(
+            [
+                "ventas = [{'mes': 'Ene', 'total': 12}, {'mes': 'Feb', 'total': 18}]\n"
+                "display(ventas)",
+                "from pathlib import Path\nPath('resultado.json').write_text('{\"ok\": true}')",
+            ],
+            self.temp.name,
+        )
+
+        self.assertTrue(result["ok"])
+        displays = json.loads(result["results"][0]["displays_json"])
+        self.assertEqual("Table", displays[0]["kind"])
+        table = json.loads(displays[0]["content"])
+        self.assertEqual(["mes", "total"], table["headers"])
+        self.assertEqual([], result["results"][0]["files"])
+        self.assertTrue(result["results"][1]["files"][0].endswith("resultado.json"))
+        variables = json.loads(result["variables_json"])
+        ventas = next(item for item in variables if item["name"] == "ventas")
+        self.assertEqual("list", ventas["type"])
+        self.assertEqual(2, ventas["size"])
 
     def test_notebook_shares_variables_and_separates_cell_output(self):
         result = runner.notebook_run(

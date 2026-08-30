@@ -38,6 +38,39 @@ class NotebookStoreTest {
         assertTrue(restored.any { it.id == second.id && it.name == "Análisis de ventas" })
     }
 
+    @Test fun `structured results survive reload`() {
+        val project = Files.createTempDirectory("notebook-results").toFile()
+        val store = NotebookStore(project)
+        store.save(
+            PixelNotebook(
+                name = "Resultados",
+                cells = listOf(
+                    NotebookCell(
+                        source = "display({'total': 42})",
+                        results = listOf(
+                            NotebookResult(
+                                kind = NotebookResultKind.Json,
+                                title = "dict",
+                                content = "{\"total\":42}",
+                            ),
+                            NotebookResult(
+                                kind = NotebookResultKind.File,
+                                title = "ventas.csv",
+                                path = "ventas.csv",
+                            ),
+                        ),
+                    )
+                ),
+            )
+        )
+
+        val results = NotebookStore(project).list().single().cells.single().results
+
+        assertEquals(2, results.size)
+        assertEquals(NotebookResultKind.Json, results[0].kind)
+        assertEquals("ventas.csv", results[1].path)
+    }
+
     @Test fun `cumulative source shares previous code and ignores markdown`() {
         val cells = listOf(
             NotebookCell(source = "x = 4"),
@@ -77,5 +110,14 @@ class NotebookStoreTest {
         assertEquals(NotebookCellStatus.Idle, changed[1].status)
         assertEquals(NotebookCellStatus.Stale, changed[2].status)
         assertEquals("1", changed[2].output)
+    }
+
+    @Test fun `chart cell safely quotes selected values`() {
+        val source = chartCellSource("datos/ventas.csv", "mes", "total", "bar", "Ventas \"2026\"")
+
+        assertTrue(source.contains("csv.DictReader"))
+        assertTrue(source.contains("\"datos/ventas.csv\""))
+        assertTrue(source.contains("title=\"Ventas \\\"2026\\\"\""))
+        assertTrue(source.contains("output=\"graficos/ventas-bar.svg\""))
     }
 }

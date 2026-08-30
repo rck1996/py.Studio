@@ -54,6 +54,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.io.File
+import java.util.Locale
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -380,7 +381,7 @@ private fun AutomationRunOrigin.displayName(): String = when (this) {
 private fun formatAutomationMoment(millis: Long): String = Instant.ofEpochMilli(millis)
     .atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"))
 
-private fun formatDuration(millis: Long): String = if (millis < 1_000) "${millis} ms" else "%.1f s".format(millis / 1_000.0)
+private fun formatDuration(millis: Long): String = if (millis < 1_000) "${millis} ms" else String.format(Locale.ROOT, "%.1f s", millis / 1_000.0)
 
 @Composable
 private fun AutomationPanel(

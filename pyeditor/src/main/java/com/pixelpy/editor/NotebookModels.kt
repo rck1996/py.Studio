@@ -8,12 +8,28 @@ import java.util.Locale
 
 internal enum class NotebookCellType { Code, Markdown }
 internal enum class NotebookCellStatus { Idle, Running, Success, Error, Stale }
+internal enum class NotebookResultKind { Text, Table, Json, File }
+
+internal data class NotebookResult(
+    val kind: NotebookResultKind,
+    val title: String = "",
+    val content: String = "",
+    val path: String = "",
+)
+
+internal data class NotebookVariable(
+    val name: String,
+    val type: String,
+    val summary: String,
+    val size: Int? = null,
+)
 
 internal data class NotebookCell(
     val id: String = UUID.randomUUID().toString(),
     val type: NotebookCellType = NotebookCellType.Code,
     val source: String = "",
     val output: String = "",
+    val results: List<NotebookResult> = emptyList(),
     val status: NotebookCellStatus = NotebookCellStatus.Idle,
     val durationMillis: Long? = null,
 )
@@ -123,6 +139,24 @@ internal class NotebookStore(private val project: File) {
                             type = enumValueOf(cell.optString("type", NotebookCellType.Code.name)),
                             source = cell.optString("source"),
                             output = cell.optString("output"),
+                            results = cell.optJSONArray("results")?.let { results ->
+                                buildList {
+                                    repeat(results.length().coerceAtMost(30)) { resultIndex ->
+                                        val result = results.optJSONObject(resultIndex) ?: return@repeat
+                                        val kind = runCatching {
+                                            enumValueOf<NotebookResultKind>(result.optString("kind"))
+                                        }.getOrNull() ?: return@repeat
+                                        add(
+                                            NotebookResult(
+                                                kind = kind,
+                                                title = result.optString("title"),
+                                                content = result.optString("content"),
+                                                path = result.optString("path"),
+                                            )
+                                        )
+                                    }
+                                }
+                            }.orEmpty(),
                             status = runCatching {
                                 enumValueOf<NotebookCellStatus>(
                                     cell.optString("status", NotebookCellStatus.Idle.name)
@@ -141,7 +175,7 @@ internal class NotebookStore(private val project: File) {
 }
 
 private fun PixelNotebook.toJson() = JSONObject()
-    .put("version", 1)
+    .put("version", 2)
     .put("id", id)
     .put("name", name)
     .put("updatedAtMillis", updatedAtMillis)
@@ -153,6 +187,17 @@ private fun PixelNotebook.toJson() = JSONObject()
                     .put("type", cell.type.name)
                     .put("source", cell.source)
                     .put("output", cell.output)
+                    .put("results", JSONArray().apply {
+                        cell.results.take(30).forEach { result ->
+                            put(
+                                JSONObject()
+                                    .put("kind", result.kind.name)
+                                    .put("title", result.title)
+                                    .put("content", result.content)
+                                    .put("path", result.path)
+                            )
+                        }
+                    })
                     .put("status", cell.status.name)
                     .put("durationMillis", cell.durationMillis ?: JSONObject.NULL)
             )

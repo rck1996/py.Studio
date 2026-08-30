@@ -3,6 +3,7 @@ import builtins
 import contextlib
 import importlib
 import io
+import json
 import os
 import sys
 import time
@@ -15,6 +16,83 @@ class PixelPyStopped(Exception):
 
 
 _repl_namespaces = {}
+
+
+def _notebook_display(value):
+    """Convert common values to a bounded, JSON-safe rich result."""
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return {"kind": "Text", "title": type(value).__name__, "content": str(value)}
+    if isinstance(value, dict):
+        safe = _notebook_json_value(value)
+        return {
+            "kind": "Json",
+            "title": "dict",
+            "content": json.dumps(safe, ensure_ascii=False),
+        }
+    if isinstance(value, (list, tuple)):
+        rows = list(value)[:200]
+        if rows and all(isinstance(item, dict) for item in rows):
+            headers = list(dict.fromkeys(key for item in rows for key in item.keys()))[:30]
+            table = {
+                "headers": [str(item) for item in headers],
+                "rows": [[_short_value(item.get(key)) for key in headers] for item in rows],
+            }
+            return {
+                "kind": "Table",
+                "title": f"{len(value)} filas",
+                "content": json.dumps(table, ensure_ascii=False),
+            }
+        return {
+            "kind": "Json",
+            "title": type(value).__name__,
+            "content": json.dumps(_notebook_json_value(rows), ensure_ascii=False),
+        }
+    return {
+        "kind": "Text",
+        "title": type(value).__name__,
+        "content": f"<{type(value).__name__}>",
+    }
+
+
+def _notebook_json_value(value, depth=0):
+    if depth >= 3:
+        return "…"
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value if not isinstance(value, str) else value[:500]
+    if isinstance(value, dict):
+        return {
+            str(key)[:80]: _notebook_json_value(item, depth + 1)
+            for key, item in list(value.items())[:50]
+        }
+    if isinstance(value, (list, tuple, set)):
+        return [_notebook_json_value(item, depth + 1) for item in list(value)[:50]]
+    return f"<{type(value).__name__}>"
+
+
+def _short_value(value):
+    safe = _notebook_json_value(value)
+    if isinstance(safe, (dict, list)):
+        return json.dumps(safe, ensure_ascii=False)[:160]
+    return str(safe)[:160]
+
+
+def _notebook_variables(namespace):
+    variables = []
+    for name, value in namespace.items():
+        if name.startswith("_") or name == "display" or len(variables) >= 50:
+            continue
+        if callable(value) or isinstance(value, type(sys)):
+            continue
+        size = None
+        if isinstance(value, (str, list, tuple, set, dict)):
+            size = len(value)
+        variables.append({
+            "name": name[:80],
+            "type": type(value).__name__[:80],
+            "summary": _short_value(value),
+            "size": size,
+        })
+    return variables
 
 
 def analyze(source, filename="main.py"):
@@ -107,6 +185,13 @@ def notebook_run(sources, working_dir="", timeout_seconds=120):
         sys.settrace(trace_notebook)
         for index, source in enumerate(sources):
             output = io.StringIO()
+            displays = []
+            cell_before = {
+                str(path): path.stat().st_mtime_ns
+                for path in work.rglob("*")
+                if path.is_file()
+            }
+            namespace["display"] = lambda value: displays.append(_notebook_display(value))
             started = time.monotonic()
             ok = True
             try:
@@ -119,11 +204,22 @@ def notebook_run(sources, working_dir="", timeout_seconds=120):
             except BaseException:
                 ok = False
                 output.write(traceback.format_exc())
+            cell_files = []
+            for path in work.rglob("*"):
+                if not path.is_file() or path.suffix.lower() == ".py":
+                    continue
+                try:
+                    if str(path) not in cell_before or path.stat().st_mtime_ns != cell_before[str(path)]:
+                        cell_files.append(str(path.resolve()))
+                except OSError:
+                    continue
             results.append(
                 {
                     "ok": ok,
                     "output": output.getvalue(),
                     "duration_ms": int((time.monotonic() - started) * 1000),
+                    "displays_json": json.dumps(displays[:30], ensure_ascii=False),
+                    "files": cell_files,
                 }
             )
             if not ok:
@@ -147,6 +243,7 @@ def notebook_run(sources, working_dir="", timeout_seconds=120):
         "ok": bool(results) and all(item["ok"] for item in results),
         "results": results,
         "files": files,
+        "variables_json": json.dumps(_notebook_variables(namespace), ensure_ascii=False),
     }
 
 

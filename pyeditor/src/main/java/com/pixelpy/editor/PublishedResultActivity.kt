@@ -57,6 +57,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import android.webkit.WebView
 import androidx.core.content.FileProvider
 import java.io.File
+import java.util.Locale
 import java.util.zip.ZipFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -69,7 +70,7 @@ private val ResultYellow = Color(0xFFFFD43B)
 private val ResultBlue = Color(0xFF79D8FF)
 private const val MAX_PREVIEW_BYTES = 1_000_000
 
-internal enum class PublishedPreviewKind { Text, Markdown, Json, Csv, Image, Zip, Excel, Html, External }
+internal enum class PublishedPreviewKind { Text, Markdown, Json, Csv, Image, Svg, Zip, Excel, Html, External }
 internal const val EXTRA_PROJECT_RESULT_PATH = "com.pixelpy.editor.extra.PROJECT_RESULT_PATH"
 internal const val EXTRA_SESSION_ID = "com.pixelpy.editor.extra.SESSION_ID"
 internal const val EXTRA_SESSION_ARTIFACT_PATH = "com.pixelpy.editor.extra.SESSION_ARTIFACT_PATH"
@@ -90,6 +91,7 @@ internal fun previewKind(file: File): PublishedPreviewKind = when (file.extensio
     "json" -> PublishedPreviewKind.Json
     "csv" -> PublishedPreviewKind.Csv
     "png", "jpg", "jpeg", "webp" -> PublishedPreviewKind.Image
+    "svg" -> PublishedPreviewKind.Svg
     "zip" -> PublishedPreviewKind.Zip
     "xlsx" -> PublishedPreviewKind.Excel
     "html", "htm" -> PublishedPreviewKind.Html
@@ -316,7 +318,7 @@ private fun PublishedResultScreen(
 }
 
 @Composable
-private fun PublishedPreview(file: File, kind: PublishedPreviewKind, search: String) {
+internal fun PublishedPreview(file: File, kind: PublishedPreviewKind, search: String) {
     when (kind) {
         PublishedPreviewKind.Json -> JsonPreview(file, search)
         PublishedPreviewKind.Csv -> CsvPreview(file, search)
@@ -350,7 +352,7 @@ private fun PublishedPreview(file: File, kind: PublishedPreviewKind, search: Str
         }
         PublishedPreviewKind.Zip -> ZipPreview(file)
         PublishedPreviewKind.Excel -> ExcelPreview(file, search)
-        PublishedPreviewKind.Html -> HtmlChartPreview(file)
+        PublishedPreviewKind.Html, PublishedPreviewKind.Svg -> HtmlChartPreview(file)
         PublishedPreviewKind.External ->
             PreviewMessage("Este formato necesita una aplicación compatible. Puedes compartirlo o abrirlo externamente.")
         PublishedPreviewKind.Text, PublishedPreviewKind.Markdown -> {
@@ -589,10 +591,10 @@ private fun HtmlChartPreview(file: File) {
             if (file.length() > 5_000_000) null else runCatching { file.readText(Charsets.UTF_8) }.getOrNull()
         }
     }
-    val source = html ?: return PreviewMessage("El HTML supera 5 MB o no se pudo leer.")
+    val source = html ?: return PreviewMessage("La vista supera 5 MB o no se pudo leer.")
     val plotly = remember(source) { "plotly" in source.lowercase() }
     Column {
-        Text(if (plotly) "GRÁFICO INTERACTIVO PLOTLY" else "VISTA HTML LOCAL", Modifier.padding(10.dp), fontWeight = FontWeight.Black)
+        Text(if (file.extension.equals("svg", true)) "GRÁFICO SVG" else if (plotly) "GRÁFICO INTERACTIVO PLOTLY" else "VISTA HTML LOCAL", Modifier.padding(10.dp), fontWeight = FontWeight.Black)
         AndroidView(
             factory = { context ->
                 WebView(context).apply {
@@ -602,7 +604,7 @@ private fun HtmlChartPreview(file: File) {
                     settings.domStorageEnabled = false
                 }
             },
-            update = { webView -> webView.loadDataWithBaseURL(null, source, "text/html", "UTF-8", null) },
+            update = { webView -> webView.loadDataWithBaseURL(null, source, if (file.extension.equals("svg", true)) "image/svg+xml" else "text/html", "UTF-8", null) },
             modifier = Modifier.fillMaxWidth().height(520.dp),
         )
     }
@@ -678,5 +680,5 @@ private fun PreviewMessage(message: String) {
 internal fun humanFileSize(bytes: Long): String = when {
     bytes < 1_024 -> "$bytes B"
     bytes < 1_048_576 -> "${bytes / 1_024} KB"
-    else -> String.format("%.1f MB", bytes / 1_048_576.0)
+    else -> String.format(Locale.ROOT, "%.1f MB", bytes / 1_048_576.0)
 }
