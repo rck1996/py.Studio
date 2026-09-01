@@ -37,7 +37,7 @@ Cada ejecución manual también crea una sesión local independiente. El histori
 - ZIP muestra hasta 500 entradas sin extraer contenido.
 - Excel permite cambiar de hoja, buscar filas, consultar fórmulas y reconocer paneles congelados en las primeras 200 filas.
 - Los HTML generados por Plotly se abren como gráficos interactivos dentro de PixelPy.
-- Los SVG generados por Data Lab se abren como gráficos locales escalables dentro de PixelPy.
+- Los SVG generados por Data Lab se abren con ajuste al ancho, zoom y exportación PNG.
 
 Los libros complejos, fórmulas, estilos avanzados y formatos no compatibles pueden abrirse con **OTRA APP**.
 

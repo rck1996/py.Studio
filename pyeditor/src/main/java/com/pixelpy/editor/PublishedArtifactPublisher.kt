@@ -84,5 +84,6 @@ internal fun mimeTypeForFile(file: File): String = when (file.extension.lowercas
     "png" -> "image/png"
     "jpg", "jpeg" -> "image/jpeg"
     "webp" -> "image/webp"
+    "svg" -> "image/svg+xml"
     else -> "application/octet-stream"
 }

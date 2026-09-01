@@ -66,7 +66,7 @@ El botón **VER RESULTADO** del widget, **ABRIR RESULTADO** en automatizaciones 
 - JSON se presenta como un árbol interactivo con objetos y listas plegables.
 - CSV se muestra como tabla filtrable con encabezados, filas alternadas y desplazamiento horizontal.
 - PNG, JPG, JPEG y WebP permiten zoom táctil dentro de PixelPy.
-- SVG y HTML se previsualizan como gráficos locales dentro de PixelPy.
+- SVG y HTML se previsualizan como gráficos locales; SVG incluye ajuste al ancho, zoom y exportación PNG.
 - ZIP muestra su contenido sin extraerlo y XLSX ofrece una vista básica de la primera hoja.
 - PDF y formatos desconocidos ofrecen **OTRA APP**.
 - Todos los formatos pueden compartirse desde el visor.
@@ -94,7 +94,7 @@ El APK se genera en `pyeditor/build/outputs/apk/development/debug/`.
 
 ## Versión
 
-La versión estable actual es `1.7.0`, centrada en Data Lab: resultados estructurados, gráficos SVG desde CSV, inspector de variables, respaldos y perfiles de librerías validados.
+La versión estable actual es `1.7.1`, centrada en Data Lab: resultados estructurados, gráficos SVG con zoom/exportación PNG, inspector de variables, respaldos y perfiles de librerías validados.
 
 Las ejecuciones programadas son aproximadas: Android puede retrasarlas por batería, Doze o restricciones del sistema.
 

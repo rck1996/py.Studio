@@ -521,6 +521,13 @@ private fun ChartBuilderDialog(
     var yColumn by remember(selectedFile) { mutableStateOf(headers.getOrNull(1) ?: headers.firstOrNull().orEmpty()) }
     var kind by remember { mutableStateOf("line") }
     var title by remember { mutableStateOf("Mi gráfico") }
+    val disabledReason = when {
+        selectedFile == null -> "Selecciona o agrega un archivo CSV."
+        headers.isEmpty() -> "No se detectaron encabezados. Usa la primera fila para los nombres de columnas."
+        headers.size < 2 -> "Se necesitan al menos dos columnas. Se admiten separadores coma, punto y coma y tabulación."
+        xColumn.isBlank() || yColumn.isBlank() -> "Selecciona las columnas para ambos ejes."
+        else -> null
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(0.dp),
@@ -548,11 +555,14 @@ private fun ChartBuilderDialog(
                         shape = RoundedCornerShape(0.dp),
                     )
                     Text("Se añadirá una celda editable que genera un SVG local.", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    disabledReason?.let {
+                        Text(it, color = Color(0xFF9A3412), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         },
         confirmButton = {
-            NotebookButton("AÑADIR CELDA", NotebookGreen, enabled = selectedFile != null && xColumn.isNotBlank() && yColumn.isNotBlank()) {
+            NotebookButton("AÑADIR CELDA", NotebookGreen, enabled = disabledReason == null) {
                 val relative = selectedFile!!.relativeTo(project).invariantSeparatorsPath
                 onCreate(chartCellSource(relative, xColumn, yColumn, kind, title))
             }
@@ -591,7 +601,13 @@ internal fun chartCellSource(csvPath: String, x: String, y: String, kind: String
 from pixelpy_chart import chart
 
 with open(${quoted(csvPath)}, encoding="utf-8-sig", newline="") as archivo:
-    filas = list(csv.DictReader(archivo))
+    muestra = archivo.read(4096)
+    archivo.seek(0)
+    try:
+        dialecto = csv.Sniffer().sniff(muestra, delimiters=",;\t")
+    except csv.Error:
+        dialecto = csv.excel
+    filas = list(csv.DictReader(archivo, dialect=dialecto))
 
 chart(filas, ${quoted(x)}, ${quoted(y)}, kind=${quoted(kind)}, title=${quoted(title)}, output=${quoted(output)})"""
 }

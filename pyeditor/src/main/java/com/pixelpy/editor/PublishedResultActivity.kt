@@ -3,9 +3,13 @@ package com.pixelpy.editor
 import android.content.ClipData
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -49,6 +53,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -57,6 +62,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import android.webkit.WebView
 import androidx.core.content.FileProvider
 import java.io.File
+import java.io.ByteArrayOutputStream
 import java.util.Locale
 import java.util.zip.ZipFile
 import kotlinx.coroutines.Dispatchers
@@ -114,6 +120,7 @@ internal fun formatPublishedText(file: File, kind: PublishedPreviewKind): String
 }
 
 internal fun parseCsvPreview(raw: String, maxRows: Int = 200): CsvPreviewData {
+    val delimiter = detectCsvDelimiter(raw)
     val records = mutableListOf<List<String>>()
     var row = mutableListOf<String>()
     val value = StringBuilder()
@@ -127,7 +134,7 @@ internal fun parseCsvPreview(raw: String, maxRows: Int = 200): CsvPreviewData {
                 index++
             }
             char == '"' -> quoted = !quoted
-            char == ',' && !quoted -> {
+            char == delimiter && !quoted -> {
                 row += value.toString()
                 value.clear()
             }
@@ -148,6 +155,28 @@ internal fun parseCsvPreview(raw: String, maxRows: Int = 200): CsvPreviewData {
     }
     val headers = records.firstOrNull().orEmpty()
     return CsvPreviewData(headers, records.drop(1).take(maxRows))
+}
+
+internal fun detectCsvDelimiter(raw: String): Char {
+    val candidates = listOf(',', ';', '\t')
+    val sample = raw.lineSequence().filter(String::isNotBlank).take(8).toList()
+    if (sample.isEmpty()) return ','
+    return candidates.maxByOrNull { candidate ->
+        sample.sumOf { line ->
+            var quoted = false
+            var count = 0
+            var index = 0
+            while (index < line.length) {
+                when {
+                    line[index] == '"' && quoted && line.getOrNull(index + 1) == '"' -> index++
+                    line[index] == '"' -> quoted = !quoted
+                    line[index] == candidate && !quoted -> count++
+                }
+                index++
+            }
+            count
+        }
+    }?.takeIf { candidate -> sample.any { it.contains(candidate) } } ?: ','
 }
 
 internal fun parseJsonPreview(raw: String): JsonPreviewNode {
@@ -585,7 +614,20 @@ internal data class ExcelPreviewData(val sheets: List<ExcelSheetPreview>) {
 
 @Composable
 private fun HtmlChartPreview(file: File) {
+    val context = LocalContext.current
     var html by remember(file.path, file.lastModified()) { mutableStateOf<String?>(null) }
+    var webView by remember(file.path) { mutableStateOf<WebView?>(null) }
+    var pendingPng by remember(file.path) { mutableStateOf<ByteArray?>(null) }
+    var reloadKey by remember(file.path) { mutableStateOf(0) }
+    val pngLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/png")) { uri ->
+        val bytes = pendingPng
+        pendingPng = null
+        if (uri != null && bytes != null) {
+            runCatching { context.contentResolver.openOutputStream(uri)?.use { it.write(bytes) } ?: error("No se pudo abrir el destino") }
+                .onSuccess { Toast.makeText(context, "Imagen PNG exportada", Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(context, "No se pudo exportar la imagen", Toast.LENGTH_LONG).show() }
+        }
+    }
     LaunchedEffect(file.path, file.lastModified()) {
         html = withContext(Dispatchers.IO) {
             if (file.length() > 5_000_000) null else runCatching { file.readText(Charsets.UTF_8) }.getOrNull()
@@ -593,8 +635,22 @@ private fun HtmlChartPreview(file: File) {
     }
     val source = html ?: return PreviewMessage("La vista supera 5 MB o no se pudo leer.")
     val plotly = remember(source) { "plotly" in source.lowercase() }
+    val isSvg = file.extension.equals("svg", true)
+    val displaySource = remember(source, isSvg, reloadKey) {
+        if (!isSvg) source else """<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;background:#FFF7E6;overflow:auto}svg{display:block;width:100%;height:auto}</style></head><body>$source</body></html>"""
+    }
     Column {
-        Text(if (file.extension.equals("svg", true)) "GRÁFICO SVG" else if (plotly) "GRÁFICO INTERACTIVO PLOTLY" else "VISTA HTML LOCAL", Modifier.padding(10.dp), fontWeight = FontWeight.Black)
+        Text(if (isSvg) "GRÁFICO SVG" else if (plotly) "GRÁFICO INTERACTIVO PLOTLY" else "VISTA HTML LOCAL", Modifier.padding(10.dp), fontWeight = FontWeight.Black)
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedButton(onClick = { webView?.zoomOut() }, shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) { Text("−", fontWeight = FontWeight.Black) }
+            OutlinedButton(onClick = { reloadKey++ }, shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) { Text("AJUSTAR", fontWeight = FontWeight.Black) }
+            OutlinedButton(onClick = { webView?.zoomIn() }, shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) { Text("+", fontWeight = FontWeight.Black) }
+            if (isSvg) Button(onClick = {
+                val bytes = webView?.let(::captureChartPng)
+                if (bytes == null) Toast.makeText(context, "El gráfico todavía se está preparando", Toast.LENGTH_SHORT).show()
+                else { pendingPng = bytes; pngLauncher.launch(file.nameWithoutExtension + ".png") }
+            }, shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) { Text("EXPORTAR PNG", fontWeight = FontWeight.Black) }
+        }
         AndroidView(
             factory = { context ->
                 WebView(context).apply {
@@ -602,12 +658,28 @@ private fun HtmlChartPreview(file: File) {
                     settings.allowFileAccess = false
                     settings.allowContentAccess = false
                     settings.domStorageEnabled = false
+                    settings.setSupportZoom(true)
+                    settings.builtInZoomControls = true
+                    settings.displayZoomControls = false
+                    webView = this
                 }
             },
-            update = { webView -> webView.loadDataWithBaseURL(null, source, if (file.extension.equals("svg", true)) "image/svg+xml" else "text/html", "UTF-8", null) },
+            update = { view ->
+                webView = view
+                view.loadDataWithBaseURL(null, displaySource, "text/html", "UTF-8", null)
+            },
             modifier = Modifier.fillMaxWidth().height(520.dp),
         )
     }
+}
+
+internal fun captureChartPng(webView: WebView): ByteArray? {
+    if (webView.width <= 0 || webView.height <= 0) return null
+    val bitmap = Bitmap.createBitmap(webView.width, webView.height, Bitmap.Config.ARGB_8888)
+    webView.draw(Canvas(bitmap))
+    return ByteArrayOutputStream().use { output ->
+        if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)) null else output.toByteArray()
+    }.also { bitmap.recycle() }
 }
 
 internal fun parseBasicXlsx(file: File): ExcelPreviewData = ZipFile(file).use { zip ->

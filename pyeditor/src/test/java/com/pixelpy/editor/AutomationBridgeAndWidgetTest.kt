@@ -111,6 +111,8 @@ class AutomationBridgeAndWidgetTest {
         assertEquals(PublishedPreviewKind.Zip, previewKind(File("results.zip")))
         assertEquals(PublishedPreviewKind.Excel, previewKind(File("report.xlsx")))
         assertEquals(PublishedPreviewKind.Html, previewKind(File("plotly.html")))
+        assertEquals(PublishedPreviewKind.Svg, previewKind(File("chart.svg")))
+        assertEquals("image/svg+xml", mimeTypeForFile(File("chart.svg")))
         assertEquals("1.5 MB", humanFileSize(1_572_864))
     }
 
@@ -123,6 +125,17 @@ class AutomationBridgeAndWidgetTest {
         assertEquals(listOf("nombre", "detalle", "valor"), table.headers)
         assertEquals(2, table.rows.size)
         assertEquals("texto, con coma", table.rows.first()[1])
+    }
+
+    @Test
+    fun csvPreviewDetectsRegionalAndTabSeparators() {
+        val semicolon = parseCsvPreview("mes;total;nota\nenero;10;\"con; detalle\"\n")
+        assertEquals(listOf("mes", "total", "nota"), semicolon.headers)
+        assertEquals("con; detalle", semicolon.rows.first()[2])
+
+        val tab = parseCsvPreview("mes\ttotal\nenero\t10\n")
+        assertEquals(listOf("mes", "total"), tab.headers)
+        assertEquals("10", tab.rows.first()[1])
     }
 
     @Test
