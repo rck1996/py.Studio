@@ -67,11 +67,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private val AutomationInk = Color(0xFF191919)
-private val AutomationPaper = Color(0xFFFFF8E7)
-private val AutomationYellow = Color(0xFFFFD43B)
-private val AutomationPink = Color(0xFFFF5DA2)
-private val AutomationBlue = Color(0xFF79D8FF)
-private val AutomationGreen = Color(0xFF7EE787)
+private val AutomationPaper = Color(0xFFFFFBF2)
+private val AutomationYellow = Color(0xFFFFE34D)
+private val AutomationPink = Color(0xFFFFCBD8)
+private val AutomationBlue = Color(0xFFB5C4FF)
+private val AutomationGreen = Color(0xFFA1F3D0)
 
 @Composable
 internal fun AutomationScreen(
@@ -246,8 +246,8 @@ private fun AutomationCard(
             }
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                Text(automation.name, fontWeight = FontWeight.Black, fontSize = 18.sp)
-                Text("${automation.projectPath}/${automation.scriptPath}", fontFamily = FontFamily.Monospace, fontSize = 11.sp)
+                Text(automation.name, fontWeight = FontWeight.Black, fontSize = 18.sp, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                Text("${automation.projectPath}/${automation.scriptPath}", fontFamily = FontFamily.Monospace, fontSize = 11.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             }
             Switch(checked = automation.enabled, onCheckedChange = onToggle)
         }
@@ -260,10 +260,10 @@ private fun AutomationCard(
         }
         Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-            Button(onClick = onRun, enabled = automation.enabled, modifier = Modifier.weight(1f).testTag("automation-run-${automation.id}"), shape = RoundedCornerShape(0.dp)) { Text("EJECUTAR") }
-            OutlinedButton(onClick = onOpen, enabled = automation.publishedArtifactPath != null, modifier = Modifier.weight(1f), shape = RoundedCornerShape(0.dp)) { Text("ABRIR") }
+            Button(onClick = onRun, enabled = automation.enabled, modifier = Modifier.weight(1f).testTag("automation-run-${automation.id}"), shape = RoundedCornerShape(12.dp)) { Text("EJECUTAR") }
+            OutlinedButton(onClick = onOpen, enabled = automation.publishedArtifactPath != null, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp)) { Text("ABRIR") }
             Box {
-                OutlinedButton(onClick = { moreActions = true }, shape = RoundedCornerShape(0.dp)) { Text("MÁS ⋮") }
+                androidx.compose.material3.IconButton(onClick = { moreActions = true }) { Text("⋮", fontSize = 24.sp) }
                 DropdownMenu(expanded = moreActions, onDismissRequest = { moreActions = false }) {
                     DropdownMenuItem(text = { Text("Editar") }, onClick = { moreActions = false; onEdit() })
                     DropdownMenuItem(text = { Text("Detalles e historial") }, onClick = { moreActions = false; onDetails() })
@@ -271,6 +271,8 @@ private fun AutomationCard(
                 }
             }
         }
+        if (!automation.enabled) Text("Pausada. Activa el interruptor para ejecutar o programar este script.", fontSize = 11.sp)
+        else if (automation.publishedArtifactPath == null) Text("El resultado estará disponible después de publicar un archivo en una ejecución.", fontSize = 11.sp)
     }
 }
 
@@ -389,7 +391,7 @@ private fun AutomationPanel(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface(modifier.fillMaxWidth().border(2.dp, AutomationInk), color = color, shape = RoundedCornerShape(0.dp)) {
+    Surface(modifier.fillMaxWidth().border(2.dp, AutomationInk), color = color, shape = RoundedCornerShape(12.dp)) {
         Column(Modifier.padding(12.dp), content = content)
     }
 }
@@ -437,7 +439,7 @@ private fun AutomationEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(0.dp),
+        shape = RoundedCornerShape(12.dp),
         containerColor = AutomationPaper,
         title = { Text(if (repositoryStyleIsNew(initial)) "NUEVA AUTOMATIZACIÓN" else "EDITAR AUTOMATIZACIÓN", fontWeight = FontWeight.Black) },
         text = {
@@ -486,7 +488,7 @@ private fun AutomationEditorDialog(
                     }
                 }
                 HorizontalDivider()
-                OutlinedButton(onClick = { resultExpanded = !resultExpanded }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(0.dp)) { Text("${if (resultExpanded) "▾" else "▸"} RESULTADO PUBLICADO") }
+                OutlinedButton(onClick = { resultExpanded = !resultExpanded }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) { Text("${if (resultExpanded) "▾" else "▸"} RESULTADO PUBLICADO") }
                 if (resultExpanded) {
                     OutlinedTextField(resultPath, { resultPath = it }, Modifier.fillMaxWidth(), label = { Text("Resultado destacado opcional") }, supportingText = { Text("Ruta relativa, por ejemplo reporte.xlsx") }, singleLine = true)
                     if (resultCandidates.isNotEmpty()) Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -496,7 +498,7 @@ private fun AutomationEditorDialog(
                         }
                     }
                 }
-                OutlinedButton(onClick = { parametersExpanded = !parametersExpanded }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(0.dp)) { Text("${if (parametersExpanded) "▾" else "▸"} PARÁMETROS · ${parameterDefinitions.size}") }
+                OutlinedButton(onClick = { parametersExpanded = !parametersExpanded }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) { Text("${if (parametersExpanded) "▾" else "▸"} PARÁMETROS · ${parameterDefinitions.size}") }
                 if (parametersExpanded) {
                     Text("Disponibles mediante os.getenv(\"NOMBRE\"). Los secretos permanecen ocultos en pantalla.", fontSize = 11.sp)
                     parameterDefinitions.forEachIndexed { index, parameter ->
@@ -534,9 +536,9 @@ private fun AutomationEditorDialog(
                         )
                     }
                 }
-                    OutlinedButton(onClick = { parameterDefinitions = parameterDefinitions + AutomationParameter("PARAMETRO_${parameterDefinitions.size + 1}") }, shape = RoundedCornerShape(0.dp)) { Text("＋ PARÁMETRO") }
+                    OutlinedButton(onClick = { parameterDefinitions = parameterDefinitions + AutomationParameter("PARAMETRO_${parameterDefinitions.size + 1}") }, shape = RoundedCornerShape(12.dp)) { Text("＋ PARÁMETRO") }
                 }
-                OutlinedButton(onClick = { advancedExpanded = !advancedExpanded }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(0.dp)) { Text("${if (advancedExpanded) "▾" else "▸"} RESTRICCIONES AVANZADAS") }
+                OutlinedButton(onClick = { advancedExpanded = !advancedExpanded }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) { Text("${if (advancedExpanded) "▾" else "▸"} RESTRICCIONES AVANZADAS") }
                 if (advancedExpanded) {
                     AutomationSwitch("Red requerida", network) { network = it }
                     AutomationSwitch("Solo mientras carga", charging) { charging = it }

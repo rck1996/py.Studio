@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
@@ -54,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -68,11 +70,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 private val NotebookInk = Color(0xFF202124)
-private val NotebookPaper = Color(0xFFFFF7E6)
-private val NotebookYellow = Color(0xFFFFD83D)
-private val NotebookBlue = Color(0xFF74B9FF)
-private val NotebookGreen = Color(0xFF7DE39B)
-private val NotebookPink = Color(0xFFFF8FB8)
+private val NotebookPaper = Color(0xFFFFFBF2)
+private val NotebookYellow = Color(0xFFFFE34D)
+private val NotebookBlue = Color(0xFFB5C4FF)
+private val NotebookGreen = Color(0xFFA1F3D0)
+private val NotebookPink = Color(0xFFFFCBD8)
 
 @Composable
 internal fun NotebookScreen(
@@ -226,29 +228,29 @@ internal fun NotebookScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedButton(
                 onClick = onBack,
-                shape = RoundedCornerShape(0.dp),
-                border = BorderStroke(3.dp, NotebookInk),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(2.dp, NotebookInk),
             ) { Text("← VOLVER", color = NotebookInk, fontWeight = FontWeight.Black) }
             Spacer(Modifier.width(8.dp))
             Box(Modifier.weight(1f)) {
                 OutlinedButton(
                     onClick = { notebookQuery = ""; selector = true },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(0.dp),
-                    border = BorderStroke(3.dp, NotebookInk),
-                ) { Text(notebook.name.uppercase(), color = NotebookInk, fontWeight = FontWeight.Black) }
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(2.dp, NotebookInk),
+                ) { Text(notebook.name, color = NotebookInk, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             }
             Spacer(Modifier.width(8.dp))
-            NotebookButton("▶ TODO", NotebookGreen, enabled = runningIndex < 0) {
-                execute(notebook.cells.lastIndex, true)
+        }
+        Surface(color = NotebookYellow, border = BorderStroke(2.dp, NotebookInk), modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("DATA LAB / ${project.name}", fontSize = 10.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(if (runningIndex >= 0) "Ejecutando celda ${runningIndex + 1} de ${notebook.cells.size}" else "${notebook.cells.size} celdas · tu espacio de análisis", fontSize = 15.sp, fontWeight = FontWeight.Black)
+                NotebookButton(if (runningIndex >= 0) "EJECUTANDO…" else "▶ EJECUTAR NOTEBOOK", NotebookGreen, Modifier.fillMaxWidth(), enabled = runningIndex < 0) {
+                    execute(notebook.cells.lastIndex, true)
+                }
             }
         }
-        Text(
-            "Celdas locales · variables compartidas en orden · ${project.name}",
-            Modifier.padding(vertical = 9.dp),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-        )
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             if (maxWidth >= 560.dp) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -364,7 +366,7 @@ internal fun NotebookScreen(
     if (selector) {
         AlertDialog(
             onDismissRequest = { selector = false },
-            shape = RoundedCornerShape(0.dp),
+            shape = RoundedCornerShape(12.dp),
             containerColor = NotebookPaper,
             title = { Text("MIS NOTEBOOKS", fontWeight = FontWeight.Black) },
             text = {
@@ -376,7 +378,7 @@ internal fun NotebookScreen(
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Buscar notebook") },
                         singleLine = true,
-                        shape = RoundedCornerShape(0.dp),
+                        shape = RoundedCornerShape(12.dp),
                     )
                     Spacer(Modifier.size(8.dp))
                     LazyColumn(
@@ -459,7 +461,7 @@ internal fun NotebookScreen(
         var name by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { newDialog = false },
-            shape = RoundedCornerShape(0.dp),
+            shape = RoundedCornerShape(12.dp),
             containerColor = NotebookYellow,
             title = { Text("NUEVO NOTEBOOK", fontWeight = FontWeight.Black) },
             text = { OutlinedTextField(name, { name = it }, label = { Text("Nombre") }, singleLine = true) },
@@ -477,7 +479,7 @@ internal fun NotebookScreen(
         var name by remember(target.id) { mutableStateOf(target.name) }
         AlertDialog(
             onDismissRequest = { renameNotebook = null },
-            shape = RoundedCornerShape(0.dp),
+            shape = RoundedCornerShape(12.dp),
             containerColor = NotebookYellow,
             title = { Text("RENOMBRAR NOTEBOOK", fontWeight = FontWeight.Black) },
             text = { OutlinedTextField(name, { name = it }, label = { Text("Nombre") }, singleLine = true) },
@@ -493,7 +495,7 @@ internal fun NotebookScreen(
     importError?.let { message ->
         AlertDialog(
             onDismissRequest = { importError = null },
-            shape = RoundedCornerShape(0.dp),
+            shape = RoundedCornerShape(12.dp),
             containerColor = NotebookYellow,
             title = { Text("IMPORTACIÓN FALLIDA", fontWeight = FontWeight.Black) },
             text = { Text(message) },
@@ -530,11 +532,11 @@ private fun ChartBuilderDialog(
     }
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(0.dp),
+        shape = RoundedCornerShape(12.dp),
         containerColor = NotebookPaper,
         title = { Text("CREAR GRÁFICO", fontWeight = FontWeight.Black) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 if (csvFiles.isEmpty()) {
                     Text("Agrega un archivo CSV al proyecto para crear un gráfico.", fontWeight = FontWeight.Bold)
                 } else {
@@ -552,7 +554,7 @@ private fun ChartBuilderDialog(
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Título") },
                         singleLine = true,
-                        shape = RoundedCornerShape(0.dp),
+                        shape = RoundedCornerShape(12.dp),
                     )
                     Text("Se añadirá una celda editable que genera un SVG local.", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     disabledReason?.let {
@@ -580,7 +582,7 @@ private fun ChartChoice(label: String, value: String, choices: List<String>, onC
             OutlinedButton(
                 onClick = { expanded = true },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(0.dp),
+                shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(2.dp, NotebookInk),
             ) { Text("${value.ifBlank { "SELECCIONAR" }}  ▾", color = NotebookInk, fontWeight = FontWeight.Black) }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -632,7 +634,7 @@ private fun NotebookCellCard(
     Surface(
         color = Color.White,
         border = BorderStroke(2.dp, NotebookInk),
-        shape = RoundedCornerShape(0.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -681,7 +683,7 @@ private fun NotebookCellCard(
                     )
                 }
                 if (cell.output.isNotBlank()) {
-                    Surface(onClick = { outputExpanded = !outputExpanded }, color = if (cell.status == NotebookCellStatus.Stale) NotebookYellow else NotebookPaper, border = BorderStroke(1.dp, NotebookInk), shape = RoundedCornerShape(0.dp), modifier = Modifier.fillMaxWidth()) {
+                    Surface(onClick = { outputExpanded = !outputExpanded }, color = if (cell.status == NotebookCellStatus.Stale) NotebookYellow else NotebookPaper, border = BorderStroke(1.dp, NotebookInk), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                         Text("${if (outputExpanded) "▾" else "▸"} SALIDA${if (cell.status == NotebookCellStatus.Stale) " · DESACTUALIZADA" else ""}", Modifier.padding(8.dp, 5.dp), fontWeight = FontWeight.Black, fontSize = 10.sp)
                     }
                     if (outputExpanded) Text(cell.output, Modifier.fillMaxWidth().background(NotebookInk).padding(10.dp), color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
@@ -717,7 +719,7 @@ private fun NotebookVariableInspector(variables: List<NotebookVariable>) {
         onClick = { expanded = !expanded },
         color = NotebookYellow,
         border = BorderStroke(2.dp, NotebookInk),
-        shape = RoundedCornerShape(0.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -909,7 +911,7 @@ private fun NotebookButton(
         enabled = enabled,
         modifier = modifier.border(2.dp, NotebookInk),
         colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = NotebookInk),
-        shape = RoundedCornerShape(0.dp),
+        shape = RoundedCornerShape(12.dp),
     ) {
         Text(label, fontWeight = FontWeight.Black, fontSize = 11.sp)
     }

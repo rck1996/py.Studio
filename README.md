@@ -1,8 +1,36 @@
 # PixelPy
 
-Editor y entorno de ejecución de Python para Android, diseñado para trabajar directamente desde el teléfono y guardar todo localmente.
+### Tu laboratorio Python. En tu bolsillo.
+
+Escribe scripts, explora datos y convierte ideas en resultados desde Android. PixelPy reúne editor, notebooks y automatizaciones en un espacio de trabajo local con una identidad visual propia.
+
+[Descargar releases](https://github.com/rck1996/PixelPy-Android/releases) · [Guía de notebooks](docs/notebook.md) · [Resultados y widgets](docs/resultados-publicados.md)
+
+Consulta también los [recorridos y criterios de experiencia de usuario](docs/experiencia-de-usuario.md).
+
+![Android 8 o superior](https://img.shields.io/badge/Android-8%2B-65D69C?logo=android&logoColor=111111)
+![Python 3.13](https://img.shields.io/badge/Python-3.13-8CBFFF?logo=python&logoColor=111111)
+![Verificación Android](https://github.com/rck1996/PixelPy-Android/actions/workflows/android.yml/badge.svg)
+
+## De una idea a un resultado
+
+| Trabaja | Explora | Automatiza |
+| --- | --- | --- |
+| Organiza scripts y recursos por proyecto. Edita con autoguardado y ejecuta Python localmente. | Importa notebooks, consulta CSV y JSON, y genera gráficos SVG desde tus datos. | Programa scripts y consulta sus resultados desde el historial o el widget. |
+
+## Primeros pasos
+
+1. Crea un proyecto e importa tus scripts o archivos de datos.
+2. Abre el editor para un script o el notebook para trabajar por celdas.
+3. Ejecuta y revisa la salida, las variables y los archivos generados.
+4. Comparte el resultado o configura una automatización para repetir el trabajo.
+
+El diseño conserva bordes definidos, colores por contexto y acciones secundarias en menús. En Data Lab, el encabezado muestra el progreso de ejecución y mantiene el acceso al selector de notebooks.
 
 ## Funciones
+
+<details>
+<summary>Explorar todas las herramientas de PixelPy</summary>
 
 - Editor multifichero con resaltado, búsqueda, autocompletado y versiones.
 - Proyectos con scripts y recursos CSV, JSON, Excel, imágenes, TXT y ZIP.
@@ -32,17 +60,19 @@ Editor y entorno de ejecución de Python para Android, diseñado para trabajar d
 
 La interfaz mantiene una sola acción principal visible por elemento. Compartir, renombrar, duplicar, eliminar y las opciones avanzadas permanecen disponibles en `⋮` o en secciones desplegables para aprovechar mejor las pantallas pequeñas.
 
+</details>
+
 ## Capturas
 
 <p align="center">
-  <img src="docs/screenshots/projects.png" alt="Gestor de proyectos de PixelPy" width="31%" />
-  <img src="docs/screenshots/editor.png" alt="Editor multifichero de PixelPy con teclado visible" width="31%" />
-  <img src="docs/screenshots/console.png" alt="Consola de ejecución de PixelPy" width="31%" />
+  <img src="docs/screenshots/studio-projects.png" alt="Pixel Studio: proyectos en Samsung S25+" width="31%" />
+  <img src="docs/screenshots/studio-editor.png" alt="Pixel Studio: editor en Samsung S25+" width="31%" />
+  <img src="docs/screenshots/studio-console.png" alt="Pixel Studio: ejecución Python comprobada en Samsung S25+" width="31%" />
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/notebook.png" alt="Notebook local de PixelPy" width="31%" />
-  <img src="docs/screenshots/automation.png" alt="Configuración compacta de automatizaciones de PixelPy" width="31%" />
+  <img src="docs/screenshots/studio-notebook.png" alt="Pixel Studio: notebook local" width="31%" />
+  <img src="docs/screenshots/studio-automations.png" alt="Pixel Studio: automatizaciones" width="31%" />
   <img src="docs/screenshots/widget.png" alt="Widget de resultados de PixelPy" width="31%" />
 </p>
 
@@ -80,6 +110,7 @@ Consulta el flujo completo y la resolución de problemas en [Resultados publicad
 ## Requisitos
 
 - Android 8.0 o superior.
+- Compilación y SDK objetivo: Android 16 (API 36).
 - Dispositivo ARM64.
 - Android Studio con JDK 17.
 - Python 3.13 instalado en el equipo de compilación para Chaquopy.
@@ -87,14 +118,14 @@ Consulta el flujo completo y la resolución de problemas en [Resultados publicad
 ## Compilar
 
 ```powershell
-.\gradlew.bat :pyeditor:assembleDebug
+.\gradlew.bat :pyeditor:assembleDevelopmentDebug
 ```
 
 El APK se genera en `pyeditor/build/outputs/apk/development/debug/`.
 
 ## Versión
 
-La versión estable actual es `1.7.1`, centrada en Data Lab: resultados estructurados, gráficos SVG con zoom/exportación PNG, inspector de variables, respaldos y perfiles de librerías validados.
+La versión configurada en el código es `1.8.0`: identidad Pixel Studio, logo Pixel Spark y SDK objetivo Android 16. Consulta [Releases](https://github.com/rck1996/PixelPy-Android/releases) para comprobar qué compilaciones están publicadas.
 
 Las ejecuciones programadas son aproximadas: Android puede retrasarlas por batería, Doze o restricciones del sistema.
 

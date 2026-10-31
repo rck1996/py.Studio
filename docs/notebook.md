@@ -66,7 +66,7 @@ El inspector **VARIABLES** resume los valores compartidos sin intentar mostrar o
 
 En **ACCIONES ▾ → CREAR GRÁFICO** puedes elegir un CSV del proyecto, las columnas X/Y y el tipo línea, barras o puntos. PixelPy añade una celda Python editable y reproducible que genera un SVG local mediante `pixelpy_chart`; no requiere Internet ni Matplotlib. El SVG aparece como resultado de la misma celda y también en Recursos.
 
-El visor ajusta inicialmente el gráfico al ancho disponible. Los controles `−`, **AJUSTAR** y `+` permiten cambiar la escala sin recorrer innecesariamente el lienzo. **EXPORTAR PNG** guarda una copia rasterizada mediante el selector de archivos de Android, mientras el SVG original permanece intacto.
+El visor ajusta inicialmente el gráfico al ancho disponible. Los controles `−`, **AJUSTAR** y `+` permiten cambiar la escala sin recorrer innecesariamente el lienzo. Tras ampliar, puedes arrastrar con un dedo para desplazarte y usar pellizco para cambiar la escala. **EXPORTAR PNG** guarda una copia rasterizada mediante el selector de archivos de Android, mientras el SVG original permanece intacto; la captura se ajusta a un tamaño seguro para evitar un consumo excesivo de memoria.
 
 En pantallas amplias la acción se muestra directamente; en teléfonos queda dentro del menú desplegable para evitar botones estrechos.
 

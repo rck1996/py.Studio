@@ -139,6 +139,14 @@ class AutomationBridgeAndWidgetTest {
     }
 
     @Test
+    fun chartExportBoundsBitmapMemoryWithoutStretching() {
+        assertEquals(1000 to 500, chartCaptureDimensions(1000, 500))
+        val (width, height) = chartCaptureDimensions(8000, 4000)
+        assertTrue(width.toLong() * height <= 2_010_000)
+        assertEquals(2.0, width.toDouble() / height, 0.01)
+    }
+
+    @Test
     fun jsonPreviewKeepsNestedObjectsArraysAndTypes() {
         val root = parseJsonPreview(
             """{"ok":true,"items":[1,{"name":"PixelPy"}],"empty":null}"""

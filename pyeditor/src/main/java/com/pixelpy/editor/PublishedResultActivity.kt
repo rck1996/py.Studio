@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Bundle
+import android.view.MotionEvent
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -66,14 +67,16 @@ import java.io.ByteArrayOutputStream
 import java.util.Locale
 import java.util.zip.ZipFile
 import kotlinx.coroutines.Dispatchers
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
 private val ResultInk = Color(0xFF191919)
-private val ResultPaper = Color(0xFFFFF8E7)
-private val ResultYellow = Color(0xFFFFD43B)
-private val ResultBlue = Color(0xFF79D8FF)
+private val ResultPaper = Color(0xFFFFFBF2)
+private val ResultYellow = Color(0xFFFFE34D)
+private val ResultBlue = Color(0xFFB5C4FF)
 private const val MAX_PREVIEW_BYTES = 1_000_000
 
 internal enum class PublishedPreviewKind { Text, Markdown, Json, Csv, Image, Svg, Zip, Excel, Html, External }
@@ -282,7 +285,7 @@ private fun PublishedResultScreen(
                 color = ResultInk,
                 contentColor = ResultYellow,
                 border = BorderStroke(2.dp, ResultInk),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                 modifier = Modifier.height(44.dp),
             ) {
                 Box(Modifier.padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
@@ -297,7 +300,7 @@ private fun PublishedResultScreen(
 
         if (file == null) {
             Box(Modifier.fillMaxSize().padding(20.dp), contentAlignment = Alignment.Center) {
-                Surface(color = Color.White, border = BorderStroke(3.dp, ResultInk)) {
+                Surface(color = Color.White, border = BorderStroke(2.dp, ResultInk)) {
                     Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("RESULTADO NO DISPONIBLE", fontWeight = FontWeight.Black, fontSize = 18.sp)
                         Spacer(Modifier.height(8.dp))
@@ -320,7 +323,7 @@ private fun PublishedResultScreen(
                     Text("${humanFileSize(file.length())} · ${mimeType ?: mimeTypeForFile(file)}", fontSize = 11.sp)
                 }
             }
-            Surface(Modifier.fillMaxWidth(), color = Color.White, border = BorderStroke(2.dp, ResultInk), shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) {
+            Surface(Modifier.fillMaxWidth(), color = Color.White, border = BorderStroke(2.dp, ResultInk), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)) {
                 Column {
                     if (kind in listOf(PublishedPreviewKind.Text, PublishedPreviewKind.Markdown, PublishedPreviewKind.Json, PublishedPreviewKind.Csv, PublishedPreviewKind.Excel)) {
                         OutlinedTextField(
@@ -335,10 +338,10 @@ private fun PublishedResultScreen(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { onShare(file) }, modifier = Modifier.weight(1f), shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) {
+                Button(onClick = { onShare(file) }, modifier = Modifier.weight(1f), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)) {
                     Text("COMPARTIR", fontWeight = FontWeight.Black)
                 }
-                OutlinedButton(onClick = { onExternal(file) }, modifier = Modifier.weight(1f), shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) {
+                OutlinedButton(onClick = { onExternal(file) }, modifier = Modifier.weight(1f), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)) {
                     Text("OTRA APP", fontWeight = FontWeight.Black)
                 }
             }
@@ -637,23 +640,26 @@ private fun HtmlChartPreview(file: File) {
     val plotly = remember(source) { "plotly" in source.lowercase() }
     val isSvg = file.extension.equals("svg", true)
     val displaySource = remember(source, isSvg, reloadKey) {
-        if (!isSvg) source else """<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;background:#FFF7E6;overflow:auto}svg{display:block;width:100%;height:auto}</style></head><body>$source</body></html>"""
+        if (!isSvg) source else """<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes"><style>html,body{margin:0;background:#FFF7E6;overflow:auto;touch-action:pan-x pan-y pinch-zoom}svg{display:block;width:100%;height:auto;touch-action:pan-x pan-y pinch-zoom}</style></head><body>$source</body></html>"""
     }
     Column {
         Text(if (isSvg) "GRÁFICO SVG" else if (plotly) "GRÁFICO INTERACTIVO PLOTLY" else "VISTA HTML LOCAL", Modifier.padding(10.dp), fontWeight = FontWeight.Black)
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            OutlinedButton(onClick = { webView?.zoomOut() }, shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) { Text("−", fontWeight = FontWeight.Black) }
-            OutlinedButton(onClick = { reloadKey++ }, shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) { Text("AJUSTAR", fontWeight = FontWeight.Black) }
-            OutlinedButton(onClick = { webView?.zoomIn() }, shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) { Text("+", fontWeight = FontWeight.Black) }
+            OutlinedButton(onClick = { webView?.zoomOut() }, shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)) { Text("−", fontWeight = FontWeight.Black) }
+            OutlinedButton(onClick = { reloadKey++ }, shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)) { Text("AJUSTAR", fontWeight = FontWeight.Black) }
+            OutlinedButton(onClick = { webView?.zoomIn() }, shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)) { Text("+", fontWeight = FontWeight.Black) }
             if (isSvg) Button(onClick = {
                 val bytes = webView?.let(::captureChartPng)
                 if (bytes == null) Toast.makeText(context, "El gráfico todavía se está preparando", Toast.LENGTH_SHORT).show()
                 else { pendingPng = bytes; pngLauncher.launch(file.nameWithoutExtension + ".png") }
-            }, shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)) { Text("EXPORTAR PNG", fontWeight = FontWeight.Black) }
+            }, shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)) { Text("EXPORTAR PNG", fontWeight = FontWeight.Black) }
         }
+        if (isSvg) Text("PELLIZCA O USA ± · CON ZOOM, ARRASTRA CON UN DEDO PARA MOVER", Modifier.padding(horizontal = 10.dp, vertical = 5.dp), fontSize = 10.sp, fontWeight = FontWeight.Black)
         AndroidView(
             factory = { context ->
                 WebView(context).apply {
+                    var panX = 0f
+                    var panY = 0f
                     settings.javaScriptEnabled = plotly
                     settings.allowFileAccess = false
                     settings.allowContentAccess = false
@@ -661,6 +667,26 @@ private fun HtmlChartPreview(file: File) {
                     settings.setSupportZoom(true)
                     settings.builtInZoomControls = true
                     settings.displayZoomControls = false
+                    setOnTouchListener { view, event ->
+                        if (event.pointerCount > 1 || this@apply.scale <= 1.01f) {
+                            false
+                        } else {
+                            when (event.actionMasked) {
+                                MotionEvent.ACTION_DOWN -> {
+                                    panX = event.x
+                                    panY = event.y
+                                    true
+                                }
+                                MotionEvent.ACTION_MOVE -> {
+                                    view.scrollBy((panX - event.x).toInt(), (panY - event.y).toInt())
+                                    panX = event.x
+                                    panY = event.y
+                                    true
+                                }
+                                else -> true
+                            }
+                        }
+                    }
                     webView = this
                 }
             },
@@ -675,11 +701,28 @@ private fun HtmlChartPreview(file: File) {
 
 internal fun captureChartPng(webView: WebView): ByteArray? {
     if (webView.width <= 0 || webView.height <= 0) return null
-    val bitmap = Bitmap.createBitmap(webView.width, webView.height, Bitmap.Config.ARGB_8888)
-    webView.draw(Canvas(bitmap))
-    return ByteArrayOutputStream().use { output ->
-        if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)) null else output.toByteArray()
-    }.also { bitmap.recycle() }
+    val (width, height) = chartCaptureDimensions(webView.width, webView.height)
+    return try {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        try {
+            val canvas = Canvas(bitmap)
+            canvas.scale(width.toFloat() / webView.width, height.toFloat() / webView.height)
+            webView.draw(canvas)
+            ByteArrayOutputStream().use { output ->
+                if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)) null else output.toByteArray()
+            }
+        } finally {
+            bitmap.recycle()
+        }
+    } catch (_: OutOfMemoryError) {
+        null
+    }
+}
+
+internal fun chartCaptureDimensions(width: Int, height: Int, maxPixels: Int = 2_000_000): Pair<Int, Int> {
+    require(width > 0 && height > 0)
+    val scale = minOf(1.0, sqrt(maxPixels.toDouble() / (width.toLong() * height.toLong())))
+    return (width * scale).roundToInt().coerceAtLeast(1) to (height * scale).roundToInt().coerceAtLeast(1)
 }
 
 internal fun parseBasicXlsx(file: File): ExcelPreviewData = ZipFile(file).use { zip ->
