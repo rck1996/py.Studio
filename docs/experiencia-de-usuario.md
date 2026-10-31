@@ -14,6 +14,11 @@ PixelPy adopta Pixel Studio: superficies crema, acentos menta, amarillo y periwi
 
 ## Comportamientos implementados
 
+- En Proyectos los scripts se abren tocando su fila; las operaciones secundarias siguen en el menú de cada archivo.
+- Scripts y Recursos usan chips compactos; el botón de nuevo script se sitúa junto a ellos.
+- El proyecto activo se identifica por su ruta canónica y se resalta en menta.
+- La navegación inferior usa fondo claro y los botones principales evitan contornos negros repetidos.
+
 - Atrás cierra Notebook o Automatizaciones, vuelve de Consola a Editor y desde Editor o REPL vuelve a Proyectos.
 - La barra inferior identifica Proyectos cuando se abre una herramienta del proyecto.
 - Una solicitud de entrada del script permite enviar la respuesta o detener la ejecución.

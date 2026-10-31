@@ -1,3 +1,7 @@
+<div align="center">
+
+<img src="docs/assets/pixelpy-banner.svg" alt="PixelPy — Tu laboratorio Python. En tu bolsillo." width="100%" />
+
 # PixelPy
 
 ### Tu laboratorio Python. En tu bolsillo.
@@ -12,7 +16,19 @@ Consulta también los [recorridos y criterios de experiencia de usuario](docs/ex
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-8CBFFF?logo=python&logoColor=111111)
 ![Verificación Android](https://github.com/rck1996/PixelPy-Android/actions/workflows/android.yml/badge.svg)
 
+[Recorrido](#capturas) · [Empezar](#primeros-pasos) · [Compilar](#compilar) · [Calidad](#calidad) · [Documentación](#documentación)
+
+</div>
+
 ## De una idea a un resultado
+
+| Quiero… | Abrir | Siguiente paso |
+| --- | --- | --- |
+| Escribir Python | Editor | Toca un script en Proyectos y ejecuta |
+| Explorar datos por etapas | Notebook | Selecciona o importa un `.ipynb` |
+| Consultar un archivo | Recursos | Elige la carpeta y abre su vista previa |
+| Repetir un proceso | Automatizaciones | Configura horario y revisa su historial |
+| Probar una expresión | REPL | Ejecuta comandos en la sesión del proyecto |
 
 | Trabaja | Explora | Automatiza |
 | --- | --- | --- |
@@ -64,6 +80,11 @@ La interfaz mantiene una sola acción principal visible por elemento. Compartir,
 
 ## Capturas
 
+Capturas reales del Samsung S25+ con Android 16. Las propuestas conceptuales están separadas en [Exploración de diseño](docs/design-proposals/README.md).
+
+<details open>
+<summary>Ver la galería del teléfono</summary>
+
 <p align="center">
   <img src="docs/screenshots/studio-projects.png" alt="Pixel Studio: proyectos en Samsung S25+" width="31%" />
   <img src="docs/screenshots/studio-editor.png" alt="Pixel Studio: editor en Samsung S25+" width="31%" />
@@ -71,21 +92,19 @@ La interfaz mantiene una sola acción principal visible por elemento. Compartir,
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/studio-notebook.png" alt="Pixel Studio: notebook local" width="31%" />
-  <img src="docs/screenshots/studio-automations.png" alt="Pixel Studio: automatizaciones" width="31%" />
-  <img src="docs/screenshots/widget.png" alt="Widget de resultados de PixelPy" width="31%" />
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/result-csv-table.png" alt="Tabla CSV interactiva de PixelPy" width="46%" />
-  <img src="docs/screenshots/result-json-tree.png" alt="Árbol JSON plegable de PixelPy" width="46%" />
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/premium-tools.png" alt="Plantillas, accesibilidad y herramientas premium de PixelPy" width="46%" />
+  <img src="docs/screenshots/studio-notebook.png" alt="Pixel Studio: notebook local" width="46%" />
+  <img src="docs/screenshots/studio-automations.png" alt="Pixel Studio: automatizaciones" width="46%" />
 </p>
 
 Consulta el flujo, Markdown compatible y límites del MVP en [Notebook local](docs/notebook.md).
+
+</details>
+
+## Pixel Spark · identidad
+
+<img src="docs/assets/pixelpy-banner.svg" alt="Identidad Pixel Spark: P modular y terminal" width="600" />
+
+La P modular y el terminal representan el paso de código a resultados. Pixel Studio utiliza crema, menta, amarillo y periwinkle; el icono Android incluye una variante monocroma.
 
 ## Resultados publicados
 
@@ -134,3 +153,24 @@ Los parámetros guardados se exponen durante la ejecución como variables de ent
 ## Privacidad
 
 Los proyectos, automatizaciones y resultados publicados se guardan localmente. PixelPy solo usa Internet cuando un script del usuario realiza una solicitud de red.
+
+## Calidad
+
+| Comprobación registrada | Resultado |
+| --- | --- |
+| Pruebas unitarias | 67 sin fallos en la validación de 1.8.0 |
+| Compilación y lint | Completados localmente |
+| S25+ · Android 16 | Instalación, navegación y ejecución con `input()` comprobadas |
+| Cobertura adicional | Accesibilidad exhaustiva y todos los escenarios de segundo plano pendientes |
+
+El badge superior muestra CI en vivo; esta tabla describe las comprobaciones locales registradas. [Recorridos y límites de validación](docs/experiencia-de-usuario.md).
+
+## Documentación
+
+| Para usar PixelPy | Para conocer el proyecto |
+| --- | --- |
+| [Notebook y gráficos](docs/notebook.md) | [Diseño y recorridos](docs/experiencia-de-usuario.md) |
+| [Resultados y widget](docs/resultados-publicados.md) | [Notas de 1.8.0](docs/release-1.8.0.md) |
+| [Descargas](https://github.com/rck1996/PixelPy-Android/releases) | [Propuestas de diseño](docs/design-proposals/README.md) |
+
+La presentación sigue el enfoque de [NexusOS](https://github.com/rck1996/NexusOS): navegación por intención, evidencia real y galerías plegables.

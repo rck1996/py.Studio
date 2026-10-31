@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320">
+<rect width="1200" height="320" rx="28" fill="#FFFBF2"/>
+<rect x="55" y="60" width="200" height="200" rx="34" fill="#10201F"/>
+<path fill="#58ECA1" d="M100 95h25v25h-25zm29 0h53v25h-53zm57 29h25v52h-25zm-57 56h53v25h-53zm-29 0h25v25h-25zm0 29h25v33h-25z"/>
+<path fill="#FFFBF2" d="m142 132 24 17-24 17 7 9 36-26-36-26z"/>
+<text x="310" y="140" font-family="sans-serif" font-size="68" font-weight="800" fill="#191919">PixelPy</text>
+<text x="314" y="192" font-family="sans-serif" font-size="27" fill="#39433F">Tu laboratorio Python. En tu bolsillo.</text>
+<rect x="314" y="227" width="125" height="7" rx="3" fill="#A1F3D0"/>
+<rect x="452" y="227" width="125" height="7" rx="3" fill="#FFE34D"/>
+<rect x="590" y="227" width="125" height="7" rx="3" fill="#B5C4FF"/>
+<text x="1070" y="105" text-anchor="end" font-family="monospace" font-size="20" fill="#39433F">CODE / DATA / RESULTS</text>
+</svg>

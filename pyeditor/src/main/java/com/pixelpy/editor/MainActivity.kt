@@ -598,13 +598,13 @@ class MainActivity : ComponentActivity() {
                 if (!showAutomations && !showNotebook && (tab == Tab.Editor || running)) {
                     BrutalButton(if (running) "■ DETENER" else "▶ EJECUTAR", if (running) Pink else Green, Modifier.testTag("run-button"), onClick = { if (running) stopCode() else runCode(false) })
                 } else {
-                    Surface(color = Paper, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp)) {
+                    Surface(color = Green.copy(alpha = 0.25f), shape = RoundedCornerShape(12.dp)) {
                         Text(if (showNotebook) "NOTEBOOK" else if (showAutomations) "AUTOMATIZACIONES" else when (tab) { Tab.Projects -> "PROYECTOS"; Tab.Repl -> "REPL"; Tab.Console -> "CONSOLA"; Tab.Editor -> "EDITOR" }, Modifier.padding(horizontal = 10.dp, vertical = 7.dp), fontWeight = FontWeight.Black, fontSize = 10.sp)
                     }
                 }
             }
         }, bottomBar = {
-            Row(Modifier.fillMaxWidth().background(Ink).navigationBarsPadding().height(58.dp)) {
+            Row(Modifier.fillMaxWidth().background(Paper).navigationBarsPadding().height(58.dp)) {
                 Nav(Tab.Projects, navigationTab, "PROYECTOS", Icons.Outlined.Folder) { showAutomations = false; showNotebook = false; tab = it }
                 Nav(Tab.Editor, navigationTab, "EDITOR", Icons.Outlined.Code) { showAutomations = false; showNotebook = false; tab = it }
                 Nav(Tab.Repl, navigationTab, "REPL", Icons.Outlined.DataObject) { showAutomations = false; showNotebook = false; tab = it }
@@ -926,11 +926,11 @@ private fun interface ResourceImporter {
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 projects.forEach { project ->
-                    Surface(onClick = { onProject(project) }, modifier = Modifier.testTag("project-${project.name}"), color = if (project == selectedProject) Yellow else Color.White, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp)) {
+                    Surface(onClick = { onProject(project) }, modifier = Modifier.testTag("project-${project.name}"), color = if (project.canonicalFile == selectedProject.canonicalFile) Green else Color.White, border = BorderStroke(1.dp, Ink.copy(alpha = 0.12f)), shape = RoundedCornerShape(12.dp)) {
                         Text("▣ ${project.name}", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Black, fontSize = 12.sp)
                     }
                 }
-                Surface(onClick = onNewProject, color = Pink, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp)) { Text("＋ NUEVO", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Black, fontSize = 12.sp) }
+                Surface(onClick = onNewProject, color = Yellow, shape = RoundedCornerShape(12.dp)) { Text("＋ Nuevo proyecto", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Bold, fontSize = 12.sp) }
             }
             Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -939,7 +939,7 @@ private fun interface ResourceImporter {
                     Text("${files.size} scripts · ${resources.size} recursos", fontSize = 11.sp)
                 }
                 Box {
-                    IconButton(onClick = { projectActions = true }, Modifier.border(2.dp, Ink)) { Icon(Icons.Outlined.MoreVert, "Acciones del proyecto") }
+                    IconButton(onClick = { projectActions = true }) { Icon(Icons.Outlined.MoreVert, "Acciones del proyecto") }
                     DropdownMenu(expanded = projectActions, onDismissRequest = { projectActions = false }) {
                         DropdownMenuItem(text = { Text("Plantillas y favoritos") }, onClick = { projectActions = false; templates = true }, leadingIcon = { Icon(Icons.Outlined.Star, null) })
                         DropdownMenuItem(text = { Text("Apariencia y accesibilidad") }, onClick = { projectActions = false; onPreferences() }, leadingIcon = { Icon(Icons.Outlined.Settings, null) })
@@ -955,21 +955,22 @@ private fun interface ResourceImporter {
         }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                BrutalButton("▦ NOTEBOOK", Pink, Modifier.weight(1f).testTag("open-notebook"), onClick = onNotebook)
-                BrutalButton("⚙ AUTOMATIZACIONES", Green, Modifier.weight(1f).testTag("open-automations"), onClick = onAutomations)
+                TextButton(onClick = onNotebook, modifier = Modifier.weight(1f).testTag("open-notebook")) { Text("▦ Notebooks", color = Ink) }
+                TextButton(onClick = onAutomations, modifier = Modifier.weight(1f).testTag("open-automations")) { Text("⚙ Automatizaciones", color = Ink) }
             }
         }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                BrutalButton("SCRIPTS ${files.size}", if (contentSection == "SCRIPTS") Yellow else Color.White, Modifier.weight(1f)) { contentSection = "SCRIPTS" }
-                BrutalButton("RECURSOS ${resources.size}", if (contentSection == "RECURSOS") Blue else Color.White, Modifier.weight(1f)) { contentSection = "RECURSOS" }
+                FilterChip(selected = contentSection == "SCRIPTS", onClick = { contentSection = "SCRIPTS" }, label = { Text("Scripts · ${files.size}") })
+                FilterChip(selected = contentSection == "RECURSOS", onClick = { contentSection = "RECURSOS" }, label = { Text("Recursos · ${resources.size}") })
+                Spacer(Modifier.weight(1f))
+                if (contentSection == "SCRIPTS") IconButton(onClick = onNew) { Icon(Icons.Outlined.Add, "Nuevo script") }
             }
         }
-        if (contentSection == "SCRIPTS") item { BrutalButton("＋ NUEVO SCRIPT", Pink, Modifier.fillMaxWidth(), onClick = onNew) }
         if (contentSection == "SCRIPTS") items(files, key = { it.path }) { file ->
-            BrutalCard(if (file == current) Blue else Color.White) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(40.dp).background(Yellow).border(2.dp, Ink), contentAlignment = Alignment.Center) { Text(".PY", fontWeight = FontWeight.Black, fontSize = 11.sp) }
+            Surface(onClick = { onOpen(file) }, modifier = Modifier.fillMaxWidth().testTag("project-open-${file.name}"), color = if (file == current) Green.copy(alpha = 0.3f) else Color.White, shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp, Ink.copy(alpha = 0.1f))) {
+                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(40.dp).background(Blue.copy(alpha = 0.45f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Code, null, tint = Ink) }
                     Spacer(Modifier.width(10.dp)); Column(Modifier.weight(1f)) { Text(file.name, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1); Text("${formatBytes(file.length())}${if (file == current) " · abierto" else " · guardado local"}", fontSize = 11.sp) }
                     Box {
                         IconButton(onClick = { scriptActionsTarget = file }) { Icon(Icons.Outlined.MoreVert, "Más acciones") }
@@ -981,7 +982,6 @@ private fun interface ResourceImporter {
                         }
                     }
                 }
-                Spacer(Modifier.height(8.dp)); BrutalButton(if (file == current) "ABIERTO" else "ABRIR", if (file == current) Green else Yellow, Modifier.fillMaxWidth().testTag("project-open-${file.name}"), onClick = { onOpen(file) })
             }
         }
         if (contentSection == "RECURSOS") item {
@@ -1260,7 +1260,7 @@ private fun interface ResourceImporter {
 }
 
 @Composable private fun BrutalButton(label: String, color: Color, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(onClick, modifier.heightIn(min = 40.dp), enabled = enabled, shape = RoundedCornerShape(12.dp), border = BorderStroke(2.dp, Ink), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp), colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = Ink, disabledContainerColor = Color.LightGray)) { Text(label, fontWeight = FontWeight.Black, fontSize = 11.sp) }
+    Button(onClick, modifier.heightIn(min = 48.dp), enabled = enabled, shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp), colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = Ink, disabledContainerColor = Color.LightGray)) { Text(label, fontWeight = FontWeight.Bold, fontSize = 11.sp) }
 }
 
 @Composable private fun NewFileDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
