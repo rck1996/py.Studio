@@ -170,6 +170,7 @@ El badge superior muestra CI en vivo; esta tabla describe las comprobaciones loc
 | Para usar PixelPy | Para conocer el proyecto |
 | --- | --- |
 | [Notebook y gráficos](docs/notebook.md) | [Diseño y recorridos](docs/experiencia-de-usuario.md) |
+| [Editor y atajos móviles](docs/editor.md) | [Código fuente](pyeditor/src/main/java/com/pixelpy/editor/) |
 | [Resultados y widget](docs/resultados-publicados.md) | [Notas de 1.8.0](docs/release-1.8.0.md) |
 | [Descargas](https://github.com/rck1996/PixelPy-Android/releases) | [Propuestas de diseño](docs/design-proposals/README.md) |
 

@@ -1079,10 +1079,11 @@ private fun interface ResourceImporter {
     val editorHorizontalScroll = rememberScrollState()
     val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     LaunchedEffect(fontSize) { context.getSharedPreferences("pixelpy", 0).edit().putFloat("font_size", fontSize).apply() }
+    val projectCompletionFiles = remember(current.parentFile?.path, files) { files.map { it.name } }
     val completionPrefix = code.text.substring(0, code.selection.min).takeLastWhile { it.isLetterOrDigit() || it == '_' }
     val completions = if (completionPrefix.length >= 2) completionItems(
         code.text,
-        current.parentFile?.walkTopDown()?.filter(File::isFile)?.map { it.relativeTo(requireNotNull(current.parentFile)).invariantSeparatorsPath }?.take(40)?.toList().orEmpty(),
+        projectCompletionFiles,
     ).filter { it.startsWith(completionPrefix, ignoreCase = true) && !it.equals(completionPrefix, true) }.take(5) else emptyList()
     fun change(next: TextFieldValue) { if (next.text != code.text) { undo = (undo + code).takeLast(80); redo = emptyList() }; onCode(next) }
     fun insert(value: String) {
@@ -1106,8 +1107,8 @@ private fun interface ResourceImporter {
                 Text(statusText, Modifier.testTag("save-status"), color = if (saveStatus == SaveStatus.Error) Color(0xFFC62828) else Color(0xFF16853B), fontWeight = FontWeight.Black, fontSize = 9.sp)
             }
             IconButton(onClick = { searching = !searching }) { Icon(Icons.Outlined.Search, "Buscar") }
-            if (!keyboardVisible) IconButton(onClick = { if (undo.isNotEmpty()) { redo = redo + code; val previous = undo.last(); undo = undo.dropLast(1); onCode(previous) } }, enabled = undo.isNotEmpty()) { Icon(Icons.Outlined.Undo, "Deshacer") }
-            if (!keyboardVisible) IconButton(onClick = { if (redo.isNotEmpty()) { undo = undo + code; val next = redo.last(); redo = redo.dropLast(1); onCode(next) } }, enabled = redo.isNotEmpty()) { Icon(Icons.Outlined.Redo, "Rehacer") }
+            IconButton(onClick = { if (undo.isNotEmpty()) { redo = redo + code; val previous = undo.last(); undo = undo.dropLast(1); onCode(previous) } }, enabled = undo.isNotEmpty()) { Icon(Icons.Outlined.Undo, "Deshacer") }
+            IconButton(onClick = { if (redo.isNotEmpty()) { undo = undo + code; val next = redo.last(); redo = redo.dropLast(1); onCode(next) } }, enabled = redo.isNotEmpty()) { Icon(Icons.Outlined.Redo, "Rehacer") }
             Box {
                 IconButton(onClick = { moreTools = true }) { Icon(Icons.Outlined.MoreVert, "Más herramientas") }
                 DropdownMenu(moreTools, { moreTools = false }) {
@@ -1137,19 +1138,23 @@ private fun interface ResourceImporter {
         }
         Spacer(Modifier.height(8.dp))
         Box(Modifier.weight(1f).fillMaxWidth().padding(end = 5.dp, bottom = 5.dp)) {
-            Box(Modifier.matchParentSize().offset(5.dp, 5.dp).background(Ink))
-            Row(Modifier.fillMaxSize().background(Color(0xFF20232A)).border(3.dp, Ink).verticalScroll(editorVerticalScroll).padding(10.dp)) {
+
+            Row(Modifier.fillMaxSize().background(Color(0xFF20232A), RoundedCornerShape(12.dp)).verticalScroll(editorVerticalScroll).padding(10.dp)) {
                 Text(lineNumberText(code.text), Modifier.width(46.dp), color = Color(0xFF7D8590), fontFamily = FontFamily.Monospace, fontSize = fontSize.sp, lineHeight = (fontSize + 7).sp, textAlign = androidx.compose.ui.text.style.TextAlign.End)
                 Spacer(Modifier.width(10.dp)); Box(Modifier.width(2.dp).fillMaxHeight().background(Color(0xFF444C56))); Spacer(Modifier.width(10.dp))
-                BasicTextField(value = code, onValueChange = { raw -> change(autoIndent(code, raw)) }, modifier = Modifier.testTag("editor-input").fillMaxSize().horizontalScroll(editorHorizontalScroll), textStyle = TextStyle(color = Color.White, fontFamily = FontFamily.Monospace, fontSize = fontSize.sp, lineHeight = (fontSize + 7).sp), cursorBrush = SolidColor(Yellow), visualTransformation = PythonHighlight)
+                BasicTextField(value = code, onValueChange = { raw -> change(autoIndent(code, raw)) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = androidx.compose.ui.text.input.KeyboardType.Ascii), modifier = Modifier.testTag("editor-input").fillMaxSize().horizontalScroll(editorHorizontalScroll), textStyle = TextStyle(color = Color.White, fontFamily = FontFamily.Monospace, fontSize = fontSize.sp, lineHeight = (fontSize + 7).sp), cursorBrush = SolidColor(Yellow), visualTransformation = PythonHighlight)
             }
         }
+        Text("Ln ${code.text.take(code.selection.min).count { it == '\n' } + 1} · Col ${code.text.take(code.selection.min).substringAfterLast('\n').length + 1} · Python · UTF-8", fontSize = 10.sp, color = Ink.copy(alpha = 0.65f), modifier = Modifier.padding(top = 4.dp))
         if (completions.isNotEmpty()) {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 completions.forEach { suggestion -> Surface(onClick = { val end = code.selection.min; val start = end - completionPrefix.length; change(TextFieldValue(code.text.replaceRange(start, end, suggestion), TextRange(start + suggestion.length))) }, color = Pink, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp)) { Text(suggestion, Modifier.padding(horizontal = 12.dp, vertical = 7.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold) } }
             }
         }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf("⇥" to "indent", "⇤" to "outdent", "# /" to "comment").forEach { (label, action) ->
+                Surface(onClick = { change(editSelectedLines(code, action)) }, color = Green, shape = RoundedCornerShape(10.dp)) { Text(label, Modifier.padding(horizontal = 14.dp, vertical = 12.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold) }
+            }
             listOf("TAB" to "    ", "(" to "()", "[" to "[]", "{" to "{}", ":" to ":", "'" to "''", "\"" to "\"\"", "=" to " = ", "#" to "# ").forEach { (label, value) ->
                 Surface(onClick = { insertPair(code, value, ::change) }, color = Blue, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp)) { Text(label, Modifier.padding(horizontal = 13.dp, vertical = 8.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black) }
             }
