@@ -40,6 +40,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -73,10 +74,10 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
-private val ResultInk = Color(0xFF191919)
-private val ResultPaper = Color(0xFFFFFBF2)
-private val ResultYellow = Color(0xFFFFE34D)
-private val ResultBlue = Color(0xFFB5C4FF)
+private val ResultInk = Color(0xFF061124)
+private val ResultPaper = Color(0xFF020B1B)
+private val ResultYellow = Color(0xFF5E9EFF)
+private val ResultBlue = Color(0xFF0C2244)
 private const val MAX_PREVIEW_BYTES = 1_000_000
 
 internal enum class PublishedPreviewKind { Text, Markdown, Json, Csv, Image, Svg, Zip, Excel, Html, External }
@@ -208,6 +209,7 @@ class PublishedResultActivity : ComponentActivity() {
         val projectResultPath = intent.getStringExtra(EXTRA_PROJECT_RESULT_PATH)
         val sessionId = intent.getStringExtra(EXTRA_SESSION_ID)
         val sessionArtifactPath = intent.getStringExtra(EXTRA_SESSION_ARTIFACT_PATH)
+        val darkMode = getSharedPreferences("pixelpy", MODE_PRIVATE).getBoolean("dark_mode", true)
         val app = application as PixelPyApp
         val automation = automationId?.let(app.automationRepository::get)
         val file = when {
@@ -225,7 +227,26 @@ class PublishedResultActivity : ComponentActivity() {
         }?.takeIf(File::isFile)
 
         setContent {
-            MaterialTheme(lightColorScheme(primary = ResultInk, background = ResultPaper, surface = ResultPaper)) {
+            MaterialTheme(
+                colorScheme = if (darkMode) darkColorScheme(
+                    primary = ResultYellow, onPrimary = ResultInk,
+                    secondary = Color(0xFF76ABFF), onSecondary = ResultInk,
+                    primaryContainer = Color(0xFF1E3A64), onPrimaryContainer = Color(0xFFDCE8FF),
+                    secondaryContainer = Color(0xFF183153), onSecondaryContainer = Color(0xFFDDE8FF),
+                    background = ResultPaper, surface = Color(0xFF041126), surfaceVariant = ResultBlue,
+                    onBackground = Color(0xFFF1EDDF), onSurface = Color(0xFFF1EDDF), onSurfaceVariant = Color(0xFFF1EDDF),
+                    outline = Color(0xFF243753),
+                ) else lightColorScheme(
+                    primary = Color(0xFFE34B12), onPrimary = Color(0xFFFFF8EB),
+                    secondary = Color(0xFFD83F0D), onSecondary = Color(0xFFFFF8EB),
+                    primaryContainer = Color(0xFFF4C2B1), onPrimaryContainer = Color(0xFF5C1C07),
+                    secondaryContainer = Color(0xFFF7D9CB), onSecondaryContainer = Color(0xFF4B2112),
+                    tertiaryContainer = Color(0xFFF0EBE0), onTertiaryContainer = Color(0xFF171919),
+                    background = Color(0xFFE9E4DA), surface = Color(0xFFF5F1E7), surfaceVariant = Color(0xFFEAE9DF),
+                    onBackground = Color(0xFF171919), onSurface = Color(0xFF171919), onSurfaceVariant = Color(0xFF171919),
+                    outline = Color(0xFFA9A69C),
+                ),
+            ) {
                 PublishedResultScreen(
                     automationName = automation?.name ?: if (sessionId != null) "Historial de ejecución" else "Ejecución actual",
                     file = file,
@@ -239,7 +260,7 @@ class PublishedResultActivity : ComponentActivity() {
     }
 
     private fun uriFor(file: File) =
-        FileProvider.getUriForFile(this, "com.pixelpy.editor.files", file)
+        FileProvider.getUriForFile(this, "${packageName}.files", file)
 
     private fun openExternal(file: File, mimeType: String?) {
         val uri = uriFor(file)
@@ -275,16 +296,16 @@ private fun PublishedResultScreen(
     onExternal: (File) -> Unit,
     onShare: (File) -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().background(ResultPaper)) {
+    Column(Modifier.fillMaxSize().technicalGridBackground()) {
         Row(
-            Modifier.fillMaxWidth().background(ResultYellow).statusBarsPadding().border(2.dp, ResultInk).padding(10.dp),
+            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primary).statusBarsPadding().border(1.dp, MaterialTheme.colorScheme.outline).padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Surface(
                 onClick = onBack,
-                color = ResultInk,
-                contentColor = ResultYellow,
-                border = BorderStroke(2.dp, ResultInk),
+                color = MaterialTheme.colorScheme.onPrimary,
+                contentColor = MaterialTheme.colorScheme.primary,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                 modifier = Modifier.height(44.dp),
             ) {
@@ -293,14 +314,14 @@ private fun PublishedResultScreen(
                 }
             }
             Column(Modifier.padding(start = 12.dp).weight(1f)) {
-                Text("RESULTADO PUBLICADO", fontWeight = FontWeight.Black, fontSize = 12.sp)
-                Text(automationName, fontWeight = FontWeight.Black, fontSize = 20.sp, maxLines = 1)
+                Text("RESULTADO PUBLICADO", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                Text(automationName, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Black, fontSize = 20.sp, maxLines = 1)
             }
         }
 
         if (file == null) {
             Box(Modifier.fillMaxSize().padding(20.dp), contentAlignment = Alignment.Center) {
-                Surface(color = Color.White, border = BorderStroke(2.dp, ResultInk)) {
+                Surface(color = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                     Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("RESULTADO NO DISPONIBLE", fontWeight = FontWeight.Black, fontSize = 18.sp)
                         Spacer(Modifier.height(8.dp))
@@ -317,13 +338,13 @@ private fun PublishedResultScreen(
             Modifier.fillMaxSize().padding(14.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Surface(color = ResultBlue, border = BorderStroke(2.dp, ResultInk)) {
+            Surface(color = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                 Column(Modifier.fillMaxWidth().padding(12.dp)) {
                     Text(file.name, fontWeight = FontWeight.Black, fontSize = 17.sp)
                     Text("${humanFileSize(file.length())} · ${mimeType ?: mimeTypeForFile(file)}", fontSize = 11.sp)
                 }
             }
-            Surface(Modifier.fillMaxWidth(), color = Color.White, border = BorderStroke(2.dp, ResultInk), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)) {
+            Surface(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
                 Column {
                     if (kind in listOf(PublishedPreviewKind.Text, PublishedPreviewKind.Markdown, PublishedPreviewKind.Json, PublishedPreviewKind.Csv, PublishedPreviewKind.Excel)) {
                         OutlinedTextField(
@@ -447,11 +468,12 @@ private fun CsvPreview(file: File, search: String) {
 
 @Composable
 private fun CsvRow(values: List<String>, header: Boolean = false, shaded: Boolean = false) {
-    Row(Modifier.background(if (header) ResultYellow else if (shaded) Color(0xFFF1F4F6) else Color.White)) {
+    Row(Modifier.background(if (header) MaterialTheme.colorScheme.primary else if (shaded) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)) {
         values.forEach { value ->
             Text(
                 value.ifEmpty { " " },
-                Modifier.width(144.dp).border(1.dp, ResultInk).padding(9.dp),
+                Modifier.width(144.dp).border(1.dp, MaterialTheme.colorScheme.outline).padding(9.dp),
+                color = if (header) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = if (header) FontWeight.Black else FontWeight.Normal,
                 fontSize = 11.sp,
@@ -573,7 +595,7 @@ private fun MarkdownPreview(source: String) {
                 line.startsWith("## ") -> Text(line.removePrefix("## "), fontSize = 20.sp, fontWeight = FontWeight.Black)
                 line.startsWith("# ") -> Text(line.removePrefix("# "), fontSize = 24.sp, fontWeight = FontWeight.Black)
                 line.startsWith("- ") || line.startsWith("* ") -> Text("• ${line.drop(2)}", fontSize = 13.sp)
-                line.startsWith("> ") -> Surface(color = ResultBlue, border = BorderStroke(2.dp, ResultInk)) {
+                line.startsWith("> ") -> Surface(color = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                     Text(line.drop(2), Modifier.fillMaxWidth().padding(9.dp), fontWeight = FontWeight.Bold)
                 }
                 line.startsWith("```") -> Text(line, fontFamily = FontFamily.Monospace, color = Color(0xFF77716A))
@@ -602,7 +624,7 @@ private fun ZipPreview(file: File) {
     Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text("${files.size} archivos", fontWeight = FontWeight.Black)
         files.forEach { (name, size) ->
-            Row(Modifier.fillMaxWidth().border(1.dp, ResultInk).padding(8.dp)) {
+            Row(Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline).padding(8.dp)) {
                 Text(name, Modifier.weight(1f), fontFamily = FontFamily.Monospace, fontSize = 11.sp)
                 Text(humanFileSize(size), fontSize = 10.sp)
             }

@@ -8,13 +8,15 @@
 
 Escribe scripts, explora datos y convierte ideas en resultados desde Android. PixelPy reúne editor, notebooks y automatizaciones en un espacio de trabajo local con una identidad visual propia.
 
-[Descargar releases](https://github.com/rck1996/PixelPy-Android/releases) · [Guía de notebooks](docs/notebook.md) · [Resultados y widgets](docs/resultados-publicados.md)
+[Descargar releases](https://github.com/rck1996/PixelPy-Android/releases) · [Guía de notebooks](docs/notebook.md) · [Resultados y widgets](docs/resultados-publicados.md) · [Identidad visual](docs/identidad-visual.md)
 
 Consulta también los [recorridos y criterios de experiencia de usuario](docs/experiencia-de-usuario.md).
 
 ![Android 8 o superior](https://img.shields.io/badge/Android-8%2B-65D69C?logo=android&logoColor=111111)
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-8CBFFF?logo=python&logoColor=111111)
 ![Verificación Android](https://github.com/rck1996/PixelPy-Android/actions/workflows/android.yml/badge.svg)
+
+> **Distribución:** la última versión publicada sigue siendo **1.8.0**. Orbit Code y las mejoras documentadas aquí están en desarrollo; una captura de prueba no representa una release. Revisa [Releases](https://github.com/rck1996/PixelPy-Android/releases) para descargar la versión estable.
 
 [Recorrido](#capturas) · [Empezar](#primeros-pasos) · [Compilar](#compilar) · [Calidad](#calidad) · [Documentación](#documentación)
 
@@ -43,6 +45,23 @@ Consulta también los [recorridos y criterios de experiencia de usuario](docs/ex
 
 El diseño conserva bordes definidos, colores por contexto y acciones secundarias en menús. En Data Lab, el encabezado muestra el progreso de ejecución y mantiene el acceso al selector de notebooks.
 
+## Cómo se conectan las herramientas
+
+```mermaid
+flowchart LR
+    PROJECT[Proyecto local] --> EDITOR[Editor Python]
+    EDITOR --> RUN[Ejecutar]
+    NOTEBOOK[Notebook] --> RUN
+    CSV[CSV y recursos] --> NOTEBOOK
+    RUN --> CONSOLE[Consola e historial]
+    RUN --> RESULTS[Resultados y visor]
+    SCHEDULE[Automatizaciones] --> WORKER[Trabajo programado]
+    WORKER --> RESULTS
+    RESULTS --> WIDGET[Widget]
+```
+
+El mismo proyecto alimenta scripts, notebooks y automatizaciones; la consola explica qué ocurrió y el visor muestra los archivos generados. Para la implementación y sus límites, consulta [Arquitectura](docs/arquitectura.md).
+
 ## Funciones
 
 <details>
@@ -68,43 +87,76 @@ El diseño conserva bordes definidos, colores por contexto y acciones secundaria
 - Plantillas favoritas para APIs, CSV, Excel, gráficos, scraping y automatizaciones.
 - Gestor de recursos con carpetas visibles aunque estén vacías, importación al destino elegido, selección múltiple, movimiento y renombrado seguros, rutas relativas copiables, papelera y vista previa.
 - Al mover o renombrar un resultado destacado, PixelPy actualiza automáticamente la automatización que lo utiliza.
-- Notebook local por proyecto con resultados estructurados, inspector resumido de variables, archivos asociados a su celda y constructor de gráficos SVG desde CSV.
+- Notebook local por proyecto con resultados estructurados, inspector resumido de variables, archivos asociados a su celda y constructor de gráficos SVG desde CSV; si falta el CSV, el flujo permite importarlo sin salir del constructor.
 - Interfaz compacta por contexto: Scripts y Recursos separados, acciones secundarias en menús, editor optimizado para el teclado y resultados plegables.
-- Tema oscuro, contraste alto y tres densidades de interfaz.
+- Modos oscuro y claro con contraste alto opcional y tres densidades de interfaz.
 - Diagnóstico de automatizaciones con historial local, causa visible en el widget, reintento y copia del reporte.
-- Interfaz neobrutalista optimizada para teclado móvil.
+- Identidad visual compartida: navy y azul eléctrico en oscuro; papel cálido y terracota en claro, con retícula técnica y órbitas en ambos temas.
 
-La interfaz mantiene una sola acción principal visible por elemento. Compartir, renombrar, duplicar, eliminar y las opciones avanzadas permanecen disponibles en `⋮` o en secciones desplegables para aprovechar mejor las pantallas pequeñas.
+La interfaz mantiene una sola acción principal visible por elemento. Compartir, renombrar, duplicar, eliminar y las opciones avanzadas permanecen disponibles en `⋮` o en secciones desplegables para aprovechar mejor las pantallas pequeñas. El fondo usa una retícula y un diagrama orbital tenues; no emplea imágenes decorativas de terceros detrás del código o los datos.
 
 </details>
 
 ## Capturas
 
-Capturas reales del Samsung S25+ con Android 16. Las propuestas conceptuales están separadas en [Exploración de diseño](docs/design-proposals/README.md).
+Capturas reales de dispositivos Android. Las propuestas conceptuales anteriores están separadas en [Exploración de diseño](docs/design-proposals/README.md); la implementación actual sigue el sistema Orbit Code.
 
-<details open>
-<summary>Ver la galería del teléfono</summary>
+<details>
+<summary>Ver capturas Orbit Code · Samsung Tab S8</summary>
+
+El índice de [capturas por dispositivo, pantalla y tema](docs/screenshots/README.md) documenta el origen de cada imagen.
 
 <p align="center">
-  <img src="docs/screenshots/studio-projects.png" alt="Pixel Studio: proyectos en Samsung S25+" width="31%" />
-  <img src="docs/screenshots/studio-editor.png" alt="Pixel Studio: editor en Samsung S25+" width="31%" />
-  <img src="docs/screenshots/studio-console.png" alt="Pixel Studio: ejecución Python comprobada en Samsung S25+" width="31%" />
+  <img src="docs/screenshots/orbit-code-tab-s8/projects-orbit-light.png" alt="Proyectos con retícula editorial y diagrama orbital en tema claro, Samsung Tab S8" width="31%" />
+  <img src="docs/screenshots/orbit-code-tab-s8/editor-light.png" alt="Editor PixelPy Orbit Code en tema claro, Samsung Tab S8" width="31%" />
+  <img src="docs/screenshots/orbit-code-tab-s8/notebook-light.png" alt="Data Lab PixelPy Orbit Code en tema claro, Samsung Tab S8" width="31%" />
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/studio-notebook.png" alt="Pixel Studio: notebook local" width="46%" />
-  <img src="docs/screenshots/studio-automations.png" alt="Pixel Studio: automatizaciones" width="46%" />
+  <img src="docs/screenshots/orbit-code-tab-s8/projects-orbit-dark.png" alt="Proyectos con retícula editorial y diagrama orbital en tema oscuro, Samsung Tab S8" width="31%" />
+  <img src="docs/screenshots/orbit-code-tab-s8/editor-dark.png" alt="Editor PixelPy Orbit Code en tema oscuro, Samsung Tab S8" width="31%" />
+  <img src="docs/screenshots/orbit-code-tab-s8/notebook-dark.png" alt="Data Lab PixelPy Orbit Code en tema oscuro, Samsung Tab S8" width="31%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/orbit-code-tab-s8/chart-import-flow-light.png" alt="Importar un CSV desde el constructor de gráficos, tema claro" width="46%" />
+  <img src="docs/screenshots/orbit-code-tab-s8/chart-import-flow-dark.png" alt="Importar un CSV desde el constructor de gráficos, tema oscuro" width="46%" />
 </p>
 
 Consulta el flujo, Markdown compatible y límites del MVP en [Notebook local](docs/notebook.md).
 
 </details>
 
-## Pixel Spark · identidad
+<details open>
+<summary>Ver capturas Orbit Code · Galaxy S25+</summary>
 
-<img src="docs/assets/pixelpy-banner.svg" alt="Identidad Pixel Spark: P modular y terminal" width="600" />
+Galería del teléfono real (Android 16); cada pantalla se presenta en modo claro y oscuro.
 
-La P modular y el terminal representan el paso de código a resultados. Pixel Studio utiliza crema, menta, amarillo y periwinkle; el icono Android incluye una variante monocroma.
+<p align="center">
+  <img src="docs/screenshots/orbit-code-s25-plus/projects-light.png" alt="Proyectos Orbit Code en tema claro, Galaxy S25+" width="31%" />
+  <img src="docs/screenshots/orbit-code-s25-plus/editor-light.png" alt="Editor de Python en tema claro, Galaxy S25+" width="31%" />
+  <img src="docs/screenshots/orbit-code-s25-plus/notebook-light.png" alt="Data Lab y celdas de notebook en tema claro, Galaxy S25+" width="31%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/orbit-code-s25-plus/projects-dark.png" alt="Proyectos Orbit Code en tema oscuro, Galaxy S25+" width="31%" />
+  <img src="docs/screenshots/orbit-code-s25-plus/editor-dark.png" alt="Editor de Python en tema oscuro, Galaxy S25+" width="31%" />
+  <img src="docs/screenshots/orbit-code-s25-plus/notebook-dark.png" alt="Data Lab y celdas de notebook en tema oscuro, Galaxy S25+" width="31%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/orbit-code-s25-plus/appearance-density.png" alt="Diálogo de apariencia y selector compacto de densidad en Galaxy S25+" width="42%" />
+</p>
+
+El [índice de capturas](docs/screenshots/README.md) identifica equipo, tema y límites de QA.
+
+</details>
+
+## Orbit Code · identidad
+
+<img src="docs/assets/pixelpy-orbit-code.svg" alt="Logo PixelPy: código en una órbita de datos" width="120" />
+
+El símbolo une delimitadores de código, nodos de datos y una órbita. Oscuro y claro comparten retícula técnica, líneas finas, jerarquía y componentes: el primero usa azul eléctrico sobre navy; el segundo, terracota sobre papel cálido. La retícula y el diagrama orbital se dibujan nativamente; las capturas muestran la app real. Consulta la [guía de identidad visual](docs/identidad-visual.md) para la paleta y el uso de marca.
 
 ## Resultados publicados
 
@@ -144,7 +196,7 @@ El APK se genera en `pyeditor/build/outputs/apk/development/debug/`.
 
 ## Versión
 
-La versión configurada en el código es `1.8.0`: identidad Pixel Studio, logo Pixel Spark y SDK objetivo Android 16. Consulta [Releases](https://github.com/rck1996/PixelPy-Android/releases) para comprobar qué compilaciones están publicadas.
+La versión más reciente publicada sigue siendo `1.8.0` (Pixel Studio / Pixel Spark). El rediseño Orbit Code está en desarrollo y aún no se distribuye como release. Consulta [Releases](https://github.com/rck1996/PixelPy-Android/releases) para verificar APKs publicados.
 
 Las ejecuciones programadas son aproximadas: Android puede retrasarlas por batería, Doze o restricciones del sistema.
 
@@ -156,22 +208,22 @@ Los proyectos, automatizaciones y resultados publicados se guardan localmente. P
 
 ## Calidad
 
-| Comprobación registrada | Resultado |
-| --- | --- |
-| Pruebas unitarias | 67 sin fallos en la validación de 1.8.0 |
-| Compilación y lint | Completados localmente |
-| S25+ · Android 16 | Instalación, navegación y ejecución con `input()` comprobadas |
-| Cobertura adicional | Accesibilidad exhaustiva y todos los escenarios de segundo plano pendientes |
+| Build | Resultado | Evidencia |
+| --- | --- | --- |
+| Release estable 1.8.0 | 67 pruebas unitarias; instalación, navegación y `input()` en Galaxy S25+ · Android 16 | [Recorridos y verificación histórica](docs/experiencia-de-usuario.md) |
+| Vista previa Orbit Code · 2026-10-31 | 76 pruebas, lint y APK de desarrollo completados; revisión visual en Tab S8 y Galaxy S25+ | [Informe de QA](docs/QA_REPORT.md) |
+| Cobertura por completar | Accesibilidad exhaustiva, variaciones de ventana y todos los escenarios de segundo plano | [Límites de validación](docs/experiencia-de-usuario.md) |
 
-El badge superior muestra CI en vivo; esta tabla describe las comprobaciones locales registradas. [Recorridos y límites de validación](docs/experiencia-de-usuario.md).
+El badge superior informa CI; las filas describen verificaciones locales de builds identificadas por separado. No presentan la vista previa como release.
 
 ## Documentación
 
 | Para usar PixelPy | Para conocer el proyecto |
 | --- | --- |
 | [Notebook y gráficos](docs/notebook.md) | [Diseño y recorridos](docs/experiencia-de-usuario.md) |
-| [Editor y atajos móviles](docs/editor.md) | [Código fuente](pyeditor/src/main/java/com/pixelpy/editor/) |
-| [Resultados y widget](docs/resultados-publicados.md) | [Notas de 1.8.0](docs/release-1.8.0.md) |
-| [Descargas](https://github.com/rck1996/PixelPy-Android/releases) | [Propuestas de diseño](docs/design-proposals/README.md) |
+| [Editor y atajos móviles](docs/editor.md) | [Identidad visual Orbit Code](docs/identidad-visual.md) |
+| [Resultados y widget](docs/resultados-publicados.md) | [Código fuente](pyeditor/src/main/java/com/pixelpy/editor/) |
+| [Descargas](https://github.com/rck1996/PixelPy-Android/releases) | [Notas históricas de 1.8.0](docs/release-1.8.0.md) |
+| [Exploración de diseño anterior](docs/design-proposals/README.md) | |
 
-La presentación sigue el enfoque de [NexusOS](https://github.com/rck1996/NexusOS): navegación por intención, evidencia real y galerías plegables.
+El [índice de documentación](docs/README.md) agrupa las guías por tarea, referencia y evidencia, siguiendo la estructura de producto de [NexusOS](https://github.com/rck1996/NexusOS).

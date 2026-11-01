@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
@@ -56,12 +58,37 @@ import java.util.concurrent.atomic.AtomicReference
 import android.provider.OpenableColumns
 import java.util.zip.ZipInputStream
 
-private val Ink = Color(0xFF191919)
-private val Paper = Color(0xFFFFFBF2)
-private val Yellow = Color(0xFFFFE34D)
-private val Pink = Color(0xFFFFCBD8)
-private val Blue = Color(0xFFB5C4FF)
-private val Green = Color(0xFFA1F3D0)
+private val Ink = Color(0xFF061124)
+private val Outline = Color(0xFF243753)
+private val Yellow = Color(0xFF5E9EFF)
+private val Pink = Color(0xFFFF9C91)
+private val Blue = Color(0xFF0C2244)
+private val Green = Color(0xFF76ABFF)
+@Composable
+private fun referenceColor(color: Color): Color {
+    val scheme = MaterialTheme.colorScheme
+    return when (color) {
+        Yellow -> scheme.primary
+        Green -> scheme.secondary
+        Pink -> scheme.tertiary
+        Blue -> scheme.surfaceVariant
+        Outline -> scheme.outline
+        else -> color
+    }
+}
+
+@Composable
+private fun referenceContentColor(color: Color): Color {
+    val scheme = MaterialTheme.colorScheme
+    return when (color) {
+        Yellow -> scheme.onPrimary
+        Green -> scheme.onSecondary
+        Pink -> scheme.onTertiary
+        Blue -> scheme.onSurfaceVariant
+        Ink -> Color(0xFFF1EDDF)
+        else -> scheme.onSurface
+    }
+}
 internal enum class Tab { Projects, Editor, Repl, Console }
 private data class CodeSymbol(val kind: String, val name: String, val line: Int)
 private data class ReplEntry(val command: String, val output: String, val ok: Boolean)
@@ -166,7 +193,7 @@ class MainActivity : ComponentActivity() {
     var pendingPrompt by remember { mutableStateOf<String?>(null) }
     val preferences = remember { context.getSharedPreferences("pixelpy", 0) }
     var showPreferences by remember { mutableStateOf(false) }
-    var darkMode by remember { mutableStateOf(preferences.getBoolean("dark_mode", false)) }
+    var darkMode by remember { mutableStateOf(preferences.getBoolean("dark_mode", true)) }
     var highContrast by remember { mutableStateOf(preferences.getBoolean("high_contrast", false)) }
     var interfaceScale by remember { mutableFloatStateOf(preferences.getFloat("interface_scale", 1f)) }
     var executionSessions by remember { mutableStateOf(executionSessionStore.list()) }
@@ -507,7 +534,7 @@ class MainActivity : ComponentActivity() {
     fun stopCode() { inputBridge?.cancel(); pendingPrompt = null; output = "Deteniendo ejecución…" }
 
     fun shareNow(file: File) {
-        val uri = FileProvider.getUriForFile(context, "com.pixelpy.editor.files", file)
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", file)
         context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
             type = mime(file)
             putExtra(Intent.EXTRA_STREAM, uri)
@@ -587,24 +614,62 @@ class MainActivity : ComponentActivity() {
         }
     }
     val navigationTab = if (showNotebook || showAutomations) Tab.Projects else tab
-    val scheme = if (darkMode) darkColorScheme(primary = Yellow, background = Color(0xFF111111), surface = Color(0xFF20232A), onBackground = Color.White, onSurface = Color.White)
-        else lightColorScheme(primary = Ink, background = if (highContrast) Color.White else Paper, surface = if (highContrast) Color.White else Paper)
+    val scheme = if (darkMode) darkColorScheme(
+        primary = Yellow, onPrimary = Color(0xFFF1EDDF),
+        secondary = Green, onSecondary = Color(0xFFF1EDDF),
+        tertiary = Pink, onTertiary = Color(0xFF061124),
+        primaryContainer = Color(0xFF1E3A64), onPrimaryContainer = Color(0xFFDCE8FF),
+        secondaryContainer = Color(0xFF183153), onSecondaryContainer = Color(0xFFDDE8FF),
+        tertiaryContainer = Color(0xFF30313A), onTertiaryContainer = Color(0xFFF1EDDF),
+        background = Color(0xFF020B1B), surface = Color(0xFF041126), surfaceVariant = Blue,
+        onBackground = Color(0xFFF1EDDF), onSurface = Color(0xFFF1EDDF),
+        onSurfaceVariant = Color(0xFFF1EDDF), outline = Outline,
+    ) else lightColorScheme(
+        primary = Color(0xFFE34B12), onPrimary = Color(0xFFFFF8EB),
+        secondary = Color(0xFFD83F0D), onSecondary = Color(0xFFFFF8EB),
+        tertiary = Color(0xFFEAE9DF), onTertiary = Color(0xFF171919),
+        primaryContainer = Color(0xFFF4C2B1), onPrimaryContainer = Color(0xFF5C1C07),
+        secondaryContainer = Color(0xFFF7D9CB), onSecondaryContainer = Color(0xFF4B2112),
+        tertiaryContainer = Color(0xFFF0EBE0), onTertiaryContainer = Color(0xFF171919),
+        background = if (highContrast) Color.White else Color(0xFFE9E4DA),
+        surface = if (highContrast) Color.White else Color(0xFFF5F1E7),
+        surfaceVariant = Color(0xFFEAE9DF),
+        onBackground = Color(0xFF171919), onSurface = Color(0xFF171919),
+        onSurfaceVariant = Color(0xFF171919), outline = Color(0xFFA9A69C),
+    )
+    SideEffect {
+        (context as? ComponentActivity)?.window?.let { window ->
+            window.statusBarColor = scheme.background.toArgb()
+            window.navigationBarColor = scheme.background.toArgb()
+            val view = window.decorView
+            var flags = view.systemUiVisibility
+            flags = if (darkMode) flags and android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() else flags or android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                flags = if (darkMode) flags and android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv() else flags or android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+            }
+            view.systemUiVisibility = flags
+        }
+    }
     CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, LocalDensity.current.fontScale * interfaceScale)) {
     MaterialTheme(colorScheme = scheme) {
-        Scaffold(modifier = Modifier.testTag("pixelpy-root"), containerColor = scheme.background, topBar = {
-            Row(Modifier.fillMaxWidth().background(Paper).statusBarsPadding().height(58.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Scaffold(
+            modifier = Modifier.testTag("pixelpy-root").technicalGridBackground(),
+            containerColor = Color.Transparent,
+            contentColor = scheme.onBackground,
+            topBar = {
+            Row(Modifier.fillMaxWidth().statusBarsPadding().height(58.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(painterResource(R.drawable.pixelpy_brand_mark), "PixelPy", Modifier.size(34.dp), tint = Color.Unspecified)
-                Spacer(Modifier.width(9.dp)); Column(Modifier.weight(1f)) { Text("PIXELPY", fontWeight = FontWeight.Black, fontSize = 18.sp); Text(current.name, Modifier.testTag("current-file-name"), fontFamily = FontFamily.Monospace, fontSize = 11.sp, maxLines = 1) }
+                Spacer(Modifier.width(9.dp)); Column(Modifier.weight(1f)) { Text("PIXELPY", fontWeight = FontWeight.Medium, fontSize = 19.sp, letterSpacing = 1.6.sp); Text(current.name, Modifier.testTag("current-file-name"), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f), fontFamily = FontFamily.Monospace, fontSize = 11.sp, maxLines = 1) }
                 if (!showAutomations && !showNotebook && (tab == Tab.Editor || running)) {
                     BrutalButton(if (running) "■ DETENER" else "▶ EJECUTAR", if (running) Pink else Green, Modifier.testTag("run-button"), onClick = { if (running) stopCode() else runCode(false) })
                 } else {
-                    Surface(color = Green.copy(alpha = 0.25f), shape = RoundedCornerShape(12.dp)) {
+                    Surface(color = referenceColor(Blue), contentColor = referenceContentColor(Blue), shape = RoundedCornerShape(4.dp), border = BorderStroke(1.dp, referenceColor(Outline))) {
                         Text(if (showNotebook) "NOTEBOOK" else if (showAutomations) "AUTOMATIZACIONES" else when (tab) { Tab.Projects -> "PROYECTOS"; Tab.Repl -> "REPL"; Tab.Console -> "CONSOLA"; Tab.Editor -> "EDITOR" }, Modifier.padding(horizontal = 10.dp, vertical = 7.dp), fontWeight = FontWeight.Black, fontSize = 10.sp)
                     }
                 }
             }
         }, bottomBar = {
-            Row(Modifier.fillMaxWidth().background(Paper).navigationBarsPadding().height(58.dp)) {
+            Row(Modifier.fillMaxWidth().navigationBarsPadding().height(58.dp)) {
                 Nav(Tab.Projects, navigationTab, "PROYECTOS", Icons.Outlined.Folder) { showAutomations = false; showNotebook = false; tab = it }
                 Nav(Tab.Editor, navigationTab, "EDITOR", Icons.Outlined.Code) { showAutomations = false; showNotebook = false; tab = it }
                 Nav(Tab.Repl, navigationTab, "REPL", Icons.Outlined.DataObject) { showAutomations = false; showNotebook = false; tab = it }
@@ -812,43 +877,47 @@ class MainActivity : ComponentActivity() {
             newProjectDialog = false
         }
     }
-    if (showBackups) ProjectBackupsDialog(
-        project = dir,
-        backups = remember(dir, backupVersion) { backupStore.list(dir) },
-        onDismiss = { showBackups = false },
-        onCreate = {
-            transition {
-                if (!flushPendingSave(current)) return@transition
-                runCatching { withContext(Dispatchers.IO) { backupStore.create(dir) } }
-                    .onSuccess { backupVersion++; android.widget.Toast.makeText(context, "Respaldo creado", android.widget.Toast.LENGTH_SHORT).show() }
-                    .onFailure { android.widget.Toast.makeText(context, "No se pudo crear el respaldo", android.widget.Toast.LENGTH_LONG).show() }
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, LocalDensity.current.fontScale * interfaceScale)) {
+        MaterialTheme(colorScheme = scheme) {
+            if (showBackups) ProjectBackupsDialog(
+                project = dir,
+                backups = remember(dir, backupVersion) { backupStore.list(dir) },
+                onDismiss = { showBackups = false },
+                onCreate = {
+                    transition {
+                        if (!flushPendingSave(current)) return@transition
+                        runCatching { withContext(Dispatchers.IO) { backupStore.create(dir) } }
+                            .onSuccess { backupVersion++; android.widget.Toast.makeText(context, "Respaldo creado", android.widget.Toast.LENGTH_SHORT).show() }
+                            .onFailure { android.widget.Toast.makeText(context, "No se pudo crear el respaldo", android.widget.Toast.LENGTH_LONG).show() }
+                    }
+                },
+                onRestore = { backup ->
+                    transition {
+                        if (!flushPendingSave(current)) return@transition
+                        runCatching { withContext(Dispatchers.IO) { backupStore.restore(dir, backup) } }
+                            .onSuccess { backupVersion++; resourceVersion++; switchProjectNow(dir); android.widget.Toast.makeText(context, "Proyecto restaurado", android.widget.Toast.LENGTH_SHORT).show() }
+                            .onFailure { android.widget.Toast.makeText(context, "No se pudo restaurar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
+                    }
+                },
+            )
+            pendingPrompt?.let { question ->
+                InputDialog(question, onCancel = ::stopCode, onSubmit = { answer -> pendingPrompt = null; inputBridge?.submit(answer) })
             }
-        },
-        onRestore = { backup ->
-            transition {
-                if (!flushPendingSave(current)) return@transition
-                runCatching { withContext(Dispatchers.IO) { backupStore.restore(dir, backup) } }
-                    .onSuccess { backupVersion++; resourceVersion++; switchProjectNow(dir); android.widget.Toast.makeText(context, "Proyecto restaurado", android.widget.Toast.LENGTH_SHORT).show() }
-                    .onFailure { android.widget.Toast.makeText(context, "No se pudo restaurar: ${it.message}", android.widget.Toast.LENGTH_LONG).show() }
+            if (showPreferences) PreferencesDialog(darkMode, highContrast, interfaceScale, onDismiss = { showPreferences = false }) { dark, contrast, scale ->
+                darkMode = dark
+                highContrast = contrast
+                interfaceScale = scale
+                preferences.edit().putBoolean("dark_mode", dark).putBoolean("high_contrast", contrast).putFloat("interface_scale", scale).apply()
             }
-        },
-    )
-    pendingPrompt?.let { question ->
-        InputDialog(question, onCancel = ::stopCode, onSubmit = { answer -> pendingPrompt = null; inputBridge?.submit(answer) })
-    }
-    if (showPreferences) PreferencesDialog(darkMode, highContrast, interfaceScale, onDismiss = { showPreferences = false }) { dark, contrast, scale ->
-        darkMode = dark
-        highContrast = contrast
-        interfaceScale = scale
-        preferences.edit().putBoolean("dark_mode", dark).putBoolean("high_contrast", contrast).putFloat("interface_scale", scale).apply()
+        }
     }
 }
 
 @Composable private fun RowScope.Nav(value: Tab, selected: Tab, label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: (Tab) -> Unit) {
     val active = value == selected
-    Column(Modifier.weight(1f).fillMaxHeight().padding(5.dp).testTag("nav-${value.name.lowercase()}").clickable { onClick(value) }.background(if (active) Green else Paper, RoundedCornerShape(12.dp)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Icon(icon, null, Modifier.size(21.dp), tint = Ink)
-        Text(label, color = Ink, fontWeight = FontWeight.Bold, fontSize = 9.sp)
+    Column(Modifier.weight(1f).fillMaxHeight().padding(5.dp).testTag("nav-${value.name.lowercase()}").clickable { onClick(value) }.background(if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background, RoundedCornerShape(6.dp)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Icon(icon, null, Modifier.size(21.dp), tint = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f))
+        Text(label, color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f), fontWeight = FontWeight.Medium, fontSize = 9.sp, letterSpacing = 0.6.sp)
     }
 }
 
@@ -862,7 +931,7 @@ private fun interface ResourceImporter {
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(12.dp),
-        containerColor = Paper,
+        containerColor = MaterialTheme.colorScheme.background,
         title = { Text("RESPALDOS · ${project.name.uppercase()}", fontWeight = FontWeight.Black) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -870,7 +939,7 @@ private fun interface ResourceImporter {
                 if (backups.isEmpty()) Text("Todavía no hay respaldos.")
                 LazyColumn(Modifier.heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                     items(backups, key = { it.file.path }) { backup ->
-                        Row(Modifier.fillMaxWidth().background(Color.White).border(2.dp, Ink).padding(9.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline).padding(9.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text(java.text.SimpleDateFormat("dd-MM-yyyy · HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(backup.createdAtMillis)), fontWeight = FontWeight.Black)
                                 Text(humanFileSize(backup.sizeBytes), fontSize = 11.sp)
@@ -888,12 +957,43 @@ private fun interface ResourceImporter {
         AlertDialog(
             onDismissRequest = { restoreTarget = null },
             shape = RoundedCornerShape(12.dp),
-            containerColor = Yellow,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("¿RESTAURAR RESPALDO?", fontWeight = FontWeight.Black) },
             text = { Text("El estado actual se respaldará primero. Luego se reemplazará el contenido del proyecto.") },
             confirmButton = { BrutalButton("RESTAURAR", Green) { restoreTarget = null; onRestore(backup) } },
             dismissButton = { TextButton(onClick = { restoreTarget = null }) { Text("CANCELAR") } },
         )
+    }
+}
+
+@Composable
+private fun ProjectWorkflowCard(
+    icon: String,
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = 68.dp),
+        color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        shape = RoundedCornerShape(6.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(icon, color = MaterialTheme.colorScheme.primary, fontSize = 20.sp, fontWeight = FontWeight.Black)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, fontWeight = FontWeight.Black, fontSize = 11.sp, maxLines = 1)
+                Text(subtitle, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f), fontSize = 10.sp, maxLines = 1)
+            }
+            Text("→", color = MaterialTheme.colorScheme.primary, fontSize = 16.sp, fontWeight = FontWeight.Black)
+        }
     }
 }
 
@@ -926,11 +1026,11 @@ private fun interface ResourceImporter {
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 projects.forEach { project ->
-                    Surface(onClick = { onProject(project) }, modifier = Modifier.testTag("project-${project.name}"), color = if (project.canonicalFile == selectedProject.canonicalFile) Green else Color.White, border = BorderStroke(1.dp, Ink.copy(alpha = 0.12f)), shape = RoundedCornerShape(12.dp)) {
+                    Surface(onClick = { onProject(project) }, modifier = Modifier.testTag("project-${project.name}"), color = if (project.canonicalFile == selectedProject.canonicalFile) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, contentColor = if (project.canonicalFile == selectedProject.canonicalFile) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline), shape = RoundedCornerShape(6.dp)) {
                         Text("▣ ${project.name}", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Black, fontSize = 12.sp)
                     }
                 }
-                Surface(onClick = onNewProject, color = Yellow, shape = RoundedCornerShape(12.dp)) { Text("＋ Nuevo proyecto", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                Surface(onClick = onNewProject, color = referenceColor(Yellow), contentColor = referenceContentColor(Yellow), shape = RoundedCornerShape(5.dp), border = BorderStroke(1.dp, referenceColor(Outline))) { Text("＋ Nuevo proyecto", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Bold, fontSize = 12.sp) }
             }
             Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -954,9 +1054,19 @@ private fun interface ResourceImporter {
             }
         }
         item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                TextButton(onClick = onNotebook, modifier = Modifier.weight(1f).testTag("open-notebook")) { Text("▦ Notebooks", color = Ink) }
-                TextButton(onClick = onAutomations, modifier = Modifier.weight(1f).testTag("open-automations")) { Text("⚙ Automatizaciones", color = Ink) }
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val stacked = maxWidth < 420.dp
+                if (stacked) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ProjectWorkflowCard("▦", "ANALIZAR · NOTEBOOK", "Celdas, datos y gráficos", Modifier.fillMaxWidth().testTag("open-notebook"), onNotebook)
+                        ProjectWorkflowCard("◷", "AUTOMATIZAR", "Repetir scripts con horario", Modifier.fillMaxWidth().testTag("open-automations"), onAutomations)
+                    }
+                } else {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ProjectWorkflowCard("▦", "ANALIZAR · NOTEBOOK", "Celdas, datos y gráficos", Modifier.weight(1f).testTag("open-notebook"), onNotebook)
+                        ProjectWorkflowCard("◷", "AUTOMATIZAR", "Repetir scripts con horario", Modifier.weight(1f).testTag("open-automations"), onAutomations)
+                    }
+                }
             }
         }
         item {
@@ -968,9 +1078,9 @@ private fun interface ResourceImporter {
             }
         }
         if (contentSection == "SCRIPTS") items(files, key = { it.path }) { file ->
-            Surface(onClick = { onOpen(file) }, modifier = Modifier.fillMaxWidth().testTag("project-open-${file.name}"), color = if (file == current) Green.copy(alpha = 0.3f) else Color.White, shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp, Ink.copy(alpha = 0.1f))) {
+            Surface(onClick = { onOpen(file) }, modifier = Modifier.fillMaxWidth().testTag("project-open-${file.name}"), color = if (file == current) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface, shape = RoundedCornerShape(6.dp), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
                 Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(40.dp).background(Blue.copy(alpha = 0.45f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Code, null, tint = Ink) }
+                    Box(Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(6.dp)), contentAlignment = Alignment.Center) { Icon(Icons.Outlined.Code, null, tint = referenceColor(Yellow)) }
                     Spacer(Modifier.width(10.dp)); Column(Modifier.weight(1f)) { Text(file.name, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1); Text("${formatBytes(file.length())}${if (file == current) " · abierto" else " · guardado local"}", fontSize = 11.sp) }
                     Box {
                         IconButton(onClick = { scriptActionsTarget = file }) { Icon(Icons.Outlined.MoreVert, "Más acciones") }
@@ -1008,7 +1118,7 @@ private fun interface ResourceImporter {
             }
         }
         if (contentSection == "RECURSOS" && visibleResources.isEmpty()) item {
-            BrutalCard(Color.White) {
+            BrutalCard(MaterialTheme.colorScheme.surface) {
                 Text("ESTA CARPETA ESTÁ LISTA PARA TUS DATOS", fontWeight = FontWeight.Black, fontSize = 13.sp)
                 Text("Añade un CSV, JSON, imagen o documento para usarlo en tus scripts y notebooks.", fontSize = 12.sp)
                 Spacer(Modifier.height(8.dp))
@@ -1016,10 +1126,10 @@ private fun interface ResourceImporter {
             }
         }
         if (contentSection == "RECURSOS") items(visibleResources, key = { it.path }) { file ->
-            BrutalCard(Color.White) {
+            BrutalCard(MaterialTheme.colorScheme.surface) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = file.path in selectedResources, onCheckedChange = { checked -> selectedResources = if (checked) selectedResources + file.path else selectedResources - file.path })
-                    Box(Modifier.size(44.dp).background(Green).border(2.dp, Ink), contentAlignment = Alignment.Center) { Text(file.extension.uppercase().take(4).ifBlank { "FILE" }, fontWeight = FontWeight.Black, fontSize = 10.sp) }
+                    Box(Modifier.size(44.dp).background(referenceColor(Green)).border(1.dp, referenceColor(Outline)), contentAlignment = Alignment.Center) { Text(file.extension.uppercase().take(4).ifBlank { "FILE" }, color = referenceContentColor(Green), fontWeight = FontWeight.Black, fontSize = 10.sp) }
                     Spacer(Modifier.width(10.dp)); Column(Modifier.weight(1f)) { Text(file.name, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Text(formatBytes(file.length()) + " · ${file.relativeTo(selectedProject).invariantSeparatorsPath}", fontSize = 11.sp) }
                     IconButton(onClick = { onPreviewResource(file) }) { Icon(Icons.Outlined.Visibility, "Vista previa") }
                     Box {
@@ -1077,8 +1187,22 @@ private fun interface ResourceImporter {
     var moreTools by remember { mutableStateOf(false) }
     val editorVerticalScroll = rememberScrollState()
     val editorHorizontalScroll = rememberScrollState()
+    val density = LocalDensity.current
     val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     LaunchedEffect(fontSize) { context.getSharedPreferences("pixelpy", 0).edit().putFloat("font_size", fontSize).apply() }
+    LaunchedEffect(code.selection.start, code.text, fontSize) {
+        val lineIndex = code.text.take(code.selection.min).count { it == '\n' }
+        val lineHeightPx = with(density) { (fontSize + 7).sp.toPx() }
+        val lineTop = (lineIndex * lineHeightPx).toInt()
+        val lineBottom = lineTop + lineHeightPx.toInt()
+        val visibleBottom = editorVerticalScroll.value + editorVerticalScroll.viewportSize
+        when {
+            lineTop < editorVerticalScroll.value -> editorVerticalScroll.scrollTo(lineTop.coerceAtLeast(0))
+            lineBottom > visibleBottom -> editorVerticalScroll.scrollTo(
+                (lineBottom - editorVerticalScroll.viewportSize).coerceAtMost(editorVerticalScroll.maxValue).coerceAtLeast(0),
+            )
+        }
+    }
     val projectCompletionFiles = remember(current.parentFile?.path, files) { files.map { it.name } }
     val completionPrefix = code.text.substring(0, code.selection.min).takeLastWhile { it.isLetterOrDigit() || it == '_' }
     val completions = if (completionPrefix.length >= 2) completionItems(
@@ -1092,7 +1216,7 @@ private fun interface ResourceImporter {
     }
     Column(Modifier.fillMaxSize().imePadding().padding(12.dp)) {
         if (!keyboardVisible) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-            files.forEach { file -> Surface(onClick = { onOpen(file) }, modifier = Modifier.testTag("editor-file-${file.name}"), color = if (file == current) Yellow else Color.White, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp)) { Text((if (file == current) "● " else "") + file.name, Modifier.padding(horizontal = 11.dp, vertical = 7.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 11.sp) } }
+            files.forEach { file -> Surface(onClick = { onOpen(file) }, modifier = Modifier.testTag("editor-file-${file.name}"), color = if (file == current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, contentColor = if (file == current) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline), shape = RoundedCornerShape(6.dp)) { Text((if (file == current) "● " else "") + file.name, Modifier.padding(horizontal = 11.dp, vertical = 7.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 11.sp) } }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -1124,7 +1248,7 @@ private fun interface ResourceImporter {
             }
         }
         if (searching) {
-            Column(Modifier.fillMaxWidth().background(Yellow).border(2.dp, Ink).padding(8.dp)) {
+            Column(Modifier.fillMaxWidth().background(referenceColor(Yellow)).border(1.dp, referenceColor(Outline)).padding(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(query, { query = it }, Modifier.weight(1f), label = { Text("Buscar") }, singleLine = true)
                     BrutalButton("SIG.", Blue, enabled = query.isNotEmpty()) { val start = if (code.selection.max < code.text.length) code.selection.max else 0; val found = code.text.indexOf(query, start, ignoreCase = true).let { if (it < 0) code.text.indexOf(query, 0, ignoreCase = true) else it }; if (found >= 0) onCode(code.copy(selection = TextRange(found, found + query.length))) }
@@ -1142,21 +1266,21 @@ private fun interface ResourceImporter {
             Row(Modifier.fillMaxSize().background(Color(0xFF20232A), RoundedCornerShape(12.dp)).verticalScroll(editorVerticalScroll).padding(10.dp)) {
                 Text(lineNumberText(code.text), Modifier.width(46.dp), color = Color(0xFF7D8590), fontFamily = FontFamily.Monospace, fontSize = fontSize.sp, lineHeight = (fontSize + 7).sp, textAlign = androidx.compose.ui.text.style.TextAlign.End)
                 Spacer(Modifier.width(10.dp)); Box(Modifier.width(2.dp).fillMaxHeight().background(Color(0xFF444C56))); Spacer(Modifier.width(10.dp))
-                BasicTextField(value = code, onValueChange = { raw -> change(autoIndent(code, raw)) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = androidx.compose.ui.text.input.KeyboardType.Ascii), modifier = Modifier.testTag("editor-input").fillMaxSize().horizontalScroll(editorHorizontalScroll), textStyle = TextStyle(color = Color.White, fontFamily = FontFamily.Monospace, fontSize = fontSize.sp, lineHeight = (fontSize + 7).sp), cursorBrush = SolidColor(Yellow), visualTransformation = PythonHighlight)
+                BasicTextField(value = code, onValueChange = { raw -> change(autoIndent(code, raw)) }, keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = androidx.compose.ui.text.input.KeyboardType.Ascii), modifier = Modifier.testTag("editor-input").fillMaxSize().horizontalScroll(editorHorizontalScroll), textStyle = TextStyle(color = Color.White, fontFamily = FontFamily.Monospace, fontSize = fontSize.sp, lineHeight = (fontSize + 7).sp), cursorBrush = SolidColor(MaterialTheme.colorScheme.primary), visualTransformation = PythonHighlight)
             }
         }
-        Text("Ln ${code.text.take(code.selection.min).count { it == '\n' } + 1} · Col ${code.text.take(code.selection.min).substringAfterLast('\n').length + 1} · Python · UTF-8", fontSize = 10.sp, color = Ink.copy(alpha = 0.65f), modifier = Modifier.padding(top = 4.dp))
+        Text("Ln ${code.text.take(code.selection.min).count { it == '\n' } + 1} · Col ${code.text.take(code.selection.min).substringAfterLast('\n').length + 1} · Python · UTF-8", fontSize = 10.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f), modifier = Modifier.padding(top = 4.dp))
         if (completions.isNotEmpty()) {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                completions.forEach { suggestion -> Surface(onClick = { val end = code.selection.min; val start = end - completionPrefix.length; change(TextFieldValue(code.text.replaceRange(start, end, suggestion), TextRange(start + suggestion.length))) }, color = Pink, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp)) { Text(suggestion, Modifier.padding(horizontal = 12.dp, vertical = 7.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold) } }
+                completions.forEach { suggestion -> Surface(onClick = { val end = code.selection.min; val start = end - completionPrefix.length; change(TextFieldValue(code.text.replaceRange(start, end, suggestion), TextRange(start + suggestion.length))) }, color = referenceColor(Pink), contentColor = referenceContentColor(Pink), border = BorderStroke(1.dp, referenceColor(Outline)), shape = RoundedCornerShape(5.dp)) { Text(suggestion, Modifier.padding(horizontal = 12.dp, vertical = 7.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold) } }
             }
         }
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("⇥" to "indent", "⇤" to "outdent", "# /" to "comment").forEach { (label, action) ->
-                Surface(onClick = { change(editSelectedLines(code, action)) }, color = Green, shape = RoundedCornerShape(10.dp)) { Text(label, Modifier.padding(horizontal = 14.dp, vertical = 12.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold) }
+                Surface(onClick = { change(editSelectedLines(code, action)) }, color = referenceColor(Green), contentColor = referenceContentColor(Green), border = BorderStroke(1.dp, referenceColor(Outline)), shape = RoundedCornerShape(5.dp)) { Text(label, Modifier.padding(horizontal = 14.dp, vertical = 12.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold) }
             }
             listOf("TAB" to "    ", "(" to "()", "[" to "[]", "{" to "{}", ":" to ":", "'" to "''", "\"" to "\"\"", "=" to " = ", "#" to "# ").forEach { (label, value) ->
-                Surface(onClick = { insertPair(code, value, ::change) }, color = Blue, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp)) { Text(label, Modifier.padding(horizontal = 13.dp, vertical = 8.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black) }
+                Surface(onClick = { insertPair(code, value, ::change) }, color = referenceColor(Blue), contentColor = referenceContentColor(Blue), border = BorderStroke(1.dp, referenceColor(Outline)), shape = RoundedCornerShape(5.dp)) { Text(label, Modifier.padding(horizontal = 13.dp, vertical = 8.dp), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black) }
             }
         }
     }
@@ -1189,11 +1313,11 @@ private fun interface ResourceImporter {
     }
     Column(Modifier.fillMaxSize().imePadding().padding(14.dp)) {
         Text("PYTHON REPL", fontWeight = FontWeight.Black, fontSize = 27.sp)
-        Text(if (runtimeBusy) "Runtime Python ocupado…" else "Sesión activa · ${project.name}", color = if (runtimeBusy) Pink else Ink, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+        Text(if (runtimeBusy) "Runtime Python ocupado…" else "Sesión activa · ${project.name}", color = if (runtimeBusy) referenceColor(Pink) else MaterialTheme.colorScheme.onBackground, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
         Spacer(Modifier.height(10.dp))
         LazyColumn(Modifier.weight(1f).fillMaxWidth().background(Ink).border(3.dp, Ink).padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (entries.isEmpty()) item { Text("Prueba expresiones sin crear un archivo.\n\n>>> 2 ** 10\n>>> datos = [3, 1, 2]\n>>> sorted(datos)", color = Color(0xFF9DA7B3), fontFamily = FontFamily.Monospace) }
-            items(entries) { entry -> Column { Text(">>> ${entry.command}", color = Yellow, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Text(entry.output, color = if (entry.ok) Color.White else Pink, fontFamily = FontFamily.Monospace) } }
+            items(entries) { entry -> Column { Text(">>> ${entry.command}", color = referenceColor(Yellow), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Text(entry.output, color = if (entry.ok) Color.White else referenceColor(Pink), fontFamily = FontFamily.Monospace) } }
         }
         Spacer(Modifier.height(10.dp)); Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(command, { command = it }, Modifier.weight(1f), label = { Text(">>> comando") }, enabled = !runtimeBusy, textStyle = TextStyle(fontFamily = FontFamily.Monospace), maxLines = 4)
@@ -1220,16 +1344,16 @@ private fun interface ResourceImporter {
     val sectionOutput = when (consolePage) { "VARIABLES" -> debugOutput.ifBlank { "Ejecuta con DEBUG para inspeccionar líneas y variables." }; "ERROR" -> if (success == false) output else "No hay errores en la última ejecución."; else -> standardOutput.ifBlank { when { running -> "Ejecutando… la salida aparecerá aquí."; success == null -> "Ejecuta un script desde el editor para ver sus resultados."; else -> "✓ Programa terminado sin salida." } } }
     val visibleOutput = if (consoleSearch.isBlank()) sectionOutput else sectionOutput.lineSequence().filter { it.contains(consoleSearch, true) }.joinToString("\n").ifBlank { "Sin coincidencias." }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) { Text("CONSOLA", fontWeight = FontWeight.Black, fontSize = 24.sp); Spacer(Modifier.weight(1f)); IconButton(onClick = { showHistory = true }) { Icon(Icons.Outlined.History, "Historial") }; Box { IconButton(onClick = { consoleActions = true }) { Icon(Icons.Outlined.MoreVert, "Más acciones") }; DropdownMenu(consoleActions, { consoleActions = false }) { DropdownMenuItem({ Text("Copiar sección") }, { consoleActions = false; clipboard.setText(AnnotatedString(sectionOutput)); android.widget.Toast.makeText(context, "Sección copiada", android.widget.Toast.LENGTH_SHORT).show() }, leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) }); DropdownMenuItem({ Text("Compartir log") }, { consoleActions = false; context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, report) }, "Compartir log")) }, leadingIcon = { Icon(Icons.Outlined.Share, null) }); DropdownMenuItem({ Text("Repetir con parámetros") }, { consoleActions = false; parameterRun = true }, enabled = !running, leadingIcon = { Icon(Icons.Outlined.Tune, null) }) } }; Surface(color = when { running -> Yellow; success == true -> Green; success == false -> Pink; else -> Blue }, shape = RoundedCornerShape(12.dp), border = BorderStroke(2.dp, Ink)) { Text(if (running) "EJECUTANDO" else if (success == false) "ERROR" else "LISTO", Modifier.padding(8.dp, 4.dp), fontWeight = FontWeight.Black, fontSize = 10.sp) } }
-        Spacer(Modifier.height(10.dp)); Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) { listOf("SALIDA" to Green, "VARIABLES" to Blue, "ERROR" to Pink).forEach { (label, color) -> Surface(onClick = { consolePage = label }, color = if (consolePage == label) color else Color.White, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp)) { Text(label, Modifier.padding(horizontal = 10.dp, vertical = 6.dp), fontWeight = FontWeight.Black, fontSize = 10.sp) } } }
+        Row(verticalAlignment = Alignment.CenterVertically) { Text("CONSOLA", fontWeight = FontWeight.Black, fontSize = 24.sp); Spacer(Modifier.weight(1f)); IconButton(onClick = { showHistory = true }) { Icon(Icons.Outlined.History, "Historial") }; Box { IconButton(onClick = { consoleActions = true }) { Icon(Icons.Outlined.MoreVert, "Más acciones") }; DropdownMenu(consoleActions, { consoleActions = false }) { DropdownMenuItem({ Text("Copiar sección") }, { consoleActions = false; clipboard.setText(AnnotatedString(sectionOutput)); android.widget.Toast.makeText(context, "Sección copiada", android.widget.Toast.LENGTH_SHORT).show() }, leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) }); DropdownMenuItem({ Text("Compartir log") }, { consoleActions = false; context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, report) }, "Compartir log")) }, leadingIcon = { Icon(Icons.Outlined.Share, null) }); DropdownMenuItem({ Text("Repetir con parámetros") }, { consoleActions = false; parameterRun = true }, enabled = !running, leadingIcon = { Icon(Icons.Outlined.Tune, null) }) } }; val status = when { running -> Yellow; success == true -> Green; success == false -> Pink; else -> Blue }; Surface(color = referenceColor(status), contentColor = referenceContentColor(status), shape = RoundedCornerShape(5.dp), border = BorderStroke(1.dp, referenceColor(Outline))) { Text(if (running) "EJECUTANDO" else if (success == false) "ERROR" else "LISTO", Modifier.padding(8.dp, 4.dp), fontWeight = FontWeight.Black, fontSize = 10.sp) } }
+        Spacer(Modifier.height(10.dp)); Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) { listOf("SALIDA" to Green, "VARIABLES" to Blue, "ERROR" to Pink).forEach { (label, color) -> val active = consolePage == label; Surface(onClick = { consolePage = label }, color = if (active) referenceColor(color) else MaterialTheme.colorScheme.surface, contentColor = if (active) referenceContentColor(color) else MaterialTheme.colorScheme.onSurface, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline), shape = RoundedCornerShape(5.dp)) { Text(label, Modifier.padding(horizontal = 10.dp, vertical = 6.dp), fontWeight = FontWeight.Black, fontSize = 10.sp) } } }
         OutlinedTextField(consoleSearch, { consoleSearch = it }, Modifier.fillMaxWidth(), label = { Text("Buscar en esta sección") }, singleLine = true)
-        Spacer(Modifier.height(8.dp)); BrutalCard(Ink, Modifier.weight(1f)) { Text("$ python $fileName", color = Green, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Spacer(Modifier.height(12.dp)); Text(visibleOutput, color = Color.White, fontFamily = FontFamily.Monospace, modifier = Modifier.testTag("console-output").verticalScroll(rememberScrollState())) }
+        Spacer(Modifier.height(8.dp)); BrutalCard(Ink, Modifier.weight(1f)) { Text("$ python $fileName", color = referenceColor(Green), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Spacer(Modifier.height(12.dp)); Text(visibleOutput, color = Color.White, fontFamily = FontFamily.Monospace, modifier = Modifier.testTag("console-output").verticalScroll(rememberScrollState())) }
         Text("PANEL · ${generated.size} archivo(s) · ${formatBytes(generated.sumOf(File::length))} modificados · memoria app aprox. ${formatBytes(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())}", fontSize = 10.sp, fontWeight = FontWeight.Bold)
         if (explanation != null) { Spacer(Modifier.height(10.dp)); BrutalCard(Yellow) { Text("QUÉ SIGNIFICA", fontWeight = FontWeight.Black, fontSize = 11.sp); Text(explanation, fontWeight = FontWeight.Medium) } }
         if (errorLine != null) { Spacer(Modifier.height(10.dp)); BrutalButton("IR A LÍNEA $errorLine", Pink, Modifier.fillMaxWidth()) { onGoToLine(errorLine) } }
         if (generated.isNotEmpty()) {
             Spacer(Modifier.height(8.dp))
-            Surface(onClick = { showGenerated = !showGenerated }, color = Blue, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) { Text("${if (showGenerated) "▾" else "▸"} ARCHIVOS GENERADOS · ${generated.size}", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Black, fontSize = 11.sp) }
+            Surface(onClick = { showGenerated = !showGenerated }, color = referenceColor(Blue), contentColor = referenceContentColor(Blue), border = BorderStroke(1.dp, referenceColor(Outline)), shape = RoundedCornerShape(5.dp), modifier = Modifier.fillMaxWidth()) { Text("${if (showGenerated) "▾" else "▸"} ARCHIVOS GENERADOS · ${generated.size}", Modifier.padding(10.dp, 7.dp), fontWeight = FontWeight.Black, fontSize = 11.sp) }
             if (showGenerated) LazyRow(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(generated, key = { it.path }) { file ->
                     BrutalCard(Blue, Modifier.width(292.dp)) {
@@ -1259,28 +1383,28 @@ private fun interface ResourceImporter {
 }
 
 @Composable private fun BrutalCard(color: Color, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Surface(modifier = modifier.fillMaxWidth(), color = color, shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp, Ink.copy(alpha = 0.18f))) {
+    Surface(modifier = modifier.fillMaxWidth(), color = referenceColor(color), contentColor = referenceContentColor(color), shape = RoundedCornerShape(5.dp), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
         Column(Modifier.fillMaxWidth().padding(14.dp), content = content)
     }
 }
 
 @Composable private fun BrutalButton(label: String, color: Color, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(onClick, modifier.heightIn(min = 48.dp), enabled = enabled, shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp), colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = Ink, disabledContainerColor = Color.LightGray)) { Text(label, fontWeight = FontWeight.Bold, fontSize = 11.sp) }
+    Button(onClick, modifier.heightIn(min = 48.dp), enabled = enabled, shape = RoundedCornerShape(5.dp), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp), colors = ButtonDefaults.buttonColors(containerColor = referenceColor(color), contentColor = referenceContentColor(color), disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant)) { Text(label, fontWeight = FontWeight.Medium, fontSize = 11.sp, letterSpacing = 0.4.sp) }
 }
 
 @Composable private fun NewFileDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
     var name by remember { mutableStateOf("") }
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Yellow, shape = RoundedCornerShape(12.dp), title = { Text("NUEVO ARCHIVO", fontWeight = FontWeight.Black) }, text = { OutlinedTextField(name, { name = it }, label = { Text("Nombre sin .py") }, singleLine = true) }, confirmButton = { BrutalButton("CREAR", Green, enabled = name.isNotBlank()) { onCreate(name) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("CANCELAR", color = Ink, fontWeight = FontWeight.Black) } })
+    AlertDialog(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(5.dp), title = { Text("NUEVO ARCHIVO", fontWeight = FontWeight.Black) }, text = { OutlinedTextField(name, { name = it }, label = { Text("Nombre sin .py") }, singleLine = true) }, confirmButton = { BrutalButton("CREAR", Green, enabled = name.isNotBlank()) { onCreate(name) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("CANCELAR") } })
 }
 
 @Composable private fun RenameDialog(initial: String, onDismiss: () -> Unit, onRename: (String) -> Unit) {
     var name by remember { mutableStateOf(initial) }
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Yellow, shape = RoundedCornerShape(12.dp), title = { Text("RENOMBRAR", fontWeight = FontWeight.Black) }, text = { OutlinedTextField(name, { name = it }, label = { Text("Nombre del archivo") }, singleLine = true) }, confirmButton = { BrutalButton("GUARDAR", Green, enabled = name.isNotBlank()) { onRename(name) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("CANCELAR", color = Ink, fontWeight = FontWeight.Black) } })
+    AlertDialog(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(5.dp), title = { Text("RENOMBRAR", fontWeight = FontWeight.Black) }, text = { OutlinedTextField(name, { name = it }, label = { Text("Nombre del archivo") }, singleLine = true) }, confirmButton = { BrutalButton("GUARDAR", Green, enabled = name.isNotBlank()) { onRename(name) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("CANCELAR") } })
 }
 
 @Composable private fun NewProjectDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
     var name by remember { mutableStateOf("") }
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Pink, shape = RoundedCornerShape(12.dp), title = { Text("NUEVO PROYECTO", fontWeight = FontWeight.Black) }, text = { Column { Text("Creará una carpeta independiente para sus módulos y archivos."); Spacer(Modifier.height(10.dp)); OutlinedTextField(name, { name = it }, label = { Text("Nombre") }, singleLine = true) } }, confirmButton = { BrutalButton("CREAR PROYECTO", Green, enabled = name.isNotBlank()) { onCreate(name) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("CANCELAR", color = Ink, fontWeight = FontWeight.Black) } })
+    AlertDialog(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(5.dp), title = { Text("NUEVO PROYECTO", fontWeight = FontWeight.Black) }, text = { Column { Text("Creará una carpeta independiente para sus módulos y archivos."); Spacer(Modifier.height(10.dp)); OutlinedTextField(name, { name = it }, label = { Text("Nombre") }, singleLine = true) } }, confirmButton = { BrutalButton("CREAR PROYECTO", Green, enabled = name.isNotBlank()) { onCreate(name) } }, dismissButton = { TextButton(onClick = onDismiss) { Text("CANCELAR") } })
 }
 
 private data class LibraryProfile(val name: String, val description: String, val modules: List<String>)
@@ -1304,12 +1428,13 @@ private val LIBRARY_PROFILES = listOf(
             }
         }
     }
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Paper, shape = RoundedCornerShape(12.dp), title = { Text("PERFILES DE LIBRERÍAS", fontWeight = FontWeight.Black) }, text = {
+    AlertDialog(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(12.dp), title = { Text("PERFILES DE LIBRERÍAS", fontWeight = FontWeight.Black) }, text = {
         LazyColumn(Modifier.heightIn(max = 440.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
             items(LIBRARY_PROFILES, key = { it.name }) { profile ->
                 val state = validation[profile.name]
-                Row(Modifier.fillMaxWidth().background(Color.White).border(2.dp, Ink).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(42.dp).background(if (state == true) Green else if (state == false) Pink else Yellow).border(2.dp, Ink), contentAlignment = Alignment.Center) {
+                Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    val stateColor = if (state == true) Green else if (state == false) Pink else Yellow
+                    Box(Modifier.size(42.dp).background(referenceColor(stateColor)).border(1.dp, referenceColor(Outline)), contentAlignment = Alignment.Center) {
                         Text(if (state == true) "✓" else if (state == false) "!" else "…", fontWeight = FontWeight.Black)
                     }
                     Spacer(Modifier.width(10.dp))
@@ -1335,18 +1460,18 @@ private val LIBRARY_PROFILES = listOf(
 ) {
     var comparison by remember { mutableStateOf<String?>(null) }
     var detail by remember { mutableStateOf<ExecutionSession?>(null) }
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Paper, shape = RoundedCornerShape(12.dp), title = { Text("HISTORIAL", fontWeight = FontWeight.Black) }, text = {
+    AlertDialog(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(12.dp), title = { Text("HISTORIAL", fontWeight = FontWeight.Black) }, text = {
         LazyColumn(Modifier.heightIn(max = 460.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (sessions.isEmpty()) item { Text("Todavía no hay ejecuciones guardadas.") }
             comparison?.let { message ->
                 item {
-                    Surface(color = Blue, border = BorderStroke(2.dp, Ink)) {
+                    Surface(color = referenceColor(Blue), contentColor = referenceContentColor(Blue), border = BorderStroke(1.dp, referenceColor(Outline))) {
                         Text(message, Modifier.padding(10.dp), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
             items(sessions, key = { it.id }) { session ->
-                Column(Modifier.fillMaxWidth().background(if (session.success) Green else Pink).border(2.dp, Ink).clickable { detail = session }.padding(10.dp)) {
+                Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, referenceColor(if (session.success) Green else Pink)).clickable { detail = session }.padding(10.dp)) {
                     Row {
                         Text(if (session.success) "✓ " else "✕ ", fontWeight = FontWeight.Black)
                         Text(session.scriptName, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
@@ -1390,13 +1515,13 @@ private val LIBRARY_PROFILES = listOf(
 @Composable private fun TemplateDialog(favorites: Set<String>, onFavorite: (String) -> Unit, onDismiss: () -> Unit, onUse: (ScriptTemplate) -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Paper,
+        containerColor = MaterialTheme.colorScheme.background,
         shape = RoundedCornerShape(12.dp),
         title = { Text("PLANTILLAS", fontWeight = FontWeight.Black) },
         text = {
             LazyColumn(Modifier.heightIn(max = 500.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(PIXELPY_TEMPLATES.sortedByDescending { it.id in favorites }, key = { it.id }) { template ->
-                    Column(Modifier.fillMaxWidth().background(if (template.id in favorites) Yellow else Color.White).border(2.dp, Ink).padding(10.dp)) {
+                    Column(Modifier.fillMaxWidth().background(if (template.id in favorites) referenceColor(Yellow) else MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline).padding(10.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) { Text(template.name, fontWeight = FontWeight.Black); Text(template.description, fontSize = 11.sp) }
                             IconButton(onClick = { onFavorite(template.id) }) { Text(if (template.id in favorites) "★" else "☆", fontSize = 22.sp) }
@@ -1416,7 +1541,7 @@ private val LIBRARY_PROFILES = listOf(
     val folders = remember(project) { resourceFolders(project) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Blue,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(12.dp),
         title = { Text(if (selected.isEmpty()) "NUEVA CARPETA" else "MOVER RECURSOS", fontWeight = FontWeight.Black) },
         text = {
@@ -1442,22 +1567,62 @@ private val LIBRARY_PROFILES = listOf(
     var darkMode by remember { mutableStateOf(dark) }
     var highContrast by remember { mutableStateOf(contrast) }
     var uiScale by remember { mutableFloatStateOf(scale) }
+    var scaleMenuExpanded by remember { mutableStateOf(false) }
+    val scaleLabel = when (uiScale) { .9f -> "COMPACTA"; 1.15f -> "AMPLIA"; else -> "NORMAL" }
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Paper,
+        containerColor = MaterialTheme.colorScheme.background,
         shape = RoundedCornerShape(12.dp),
-        title = { Text("APARIENCIA Y ACCESIBILIDAD", fontWeight = FontWeight.Black) },
+        title = { Text("APARIENCIA", fontWeight = FontWeight.Black) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text("Tema oscuro", Modifier.weight(1f)); Switch(darkMode, { darkMode = it }) }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text("Contraste alto", Modifier.weight(1f)); Switch(highContrast, { highContrast = it }) }
                 Text("Densidad del texto", fontWeight = FontWeight.Black)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf(.9f to "COMPACTA", 1f to "NORMAL", 1.15f to "AMPLIA").forEach { (value, label) ->
-                        FilterChip(selected = uiScale == value, onClick = { uiScale = value }, label = { Text(label) })
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Surface(
+                        onClick = { scaleMenuExpanded = !scaleMenuExpanded },
+                        color = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        shape = RoundedCornerShape(5.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        modifier = Modifier.fillMaxWidth().testTag("appearance-density-selector"),
+                    ) {
+                        Row(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(scaleLabel, Modifier.weight(1f), fontWeight = FontWeight.Black)
+                            Icon(
+                                if (scaleMenuExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                                contentDescription = if (scaleMenuExpanded) "Cerrar densidades" else "Elegir densidad",
+                            )
+                        }
+                    }
+                    if (scaleMenuExpanded) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(5.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Column {
+                                listOf(.9f to "Compacta", 1f to "Normal", 1.15f to "Amplia").forEach { (value, label) ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(min = 48.dp)
+                                            .testTag("appearance-density-option-${value.toString().replace('.', '-')}")
+                                            .clickable { uiScale = value; scaleMenuExpanded = false }
+                                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(label, Modifier.weight(1f))
+                                        if (uiScale == value) Icon(Icons.Outlined.Check, contentDescription = "Seleccionada")
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                Text("El tamaño del código también puede ajustarse desde ⋮ en el editor.", fontSize = 11.sp)
+                Text("El tamaño del código se ajusta por separado desde Más herramientas en el editor.", fontSize = 11.sp)
             }
         },
         confirmButton = { BrutalButton("GUARDAR", Green) { onSave(darkMode, highContrast, uiScale); onDismiss() } },
@@ -1469,7 +1634,7 @@ private val LIBRARY_PROFILES = listOf(
     var rows by remember { mutableStateOf(listOf("" to "")) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Green,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(12.dp),
         title = { Text("REPETIR CON PARÁMETROS", fontWeight = FontWeight.Black) },
         text = {
@@ -1496,7 +1661,7 @@ private val LIBRARY_PROFILES = listOf(
     var page by remember { mutableStateOf("SALIDA") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Paper,
+        containerColor = MaterialTheme.colorScheme.background,
         shape = RoundedCornerShape(12.dp),
         title = { Text("${if (session.success) "✓" else "✕"} ${session.scriptName}", fontWeight = FontWeight.Black) },
         text = {
@@ -1527,32 +1692,32 @@ private val LIBRARY_PROFILES = listOf(
 
 @Composable private fun CodeOutlineDialog(source: String, onDismiss: () -> Unit, onGo: (Int) -> Unit) {
     val symbols = remember(source) { codeSymbols(source) }
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Paper, shape = RoundedCornerShape(12.dp), title = { Text("ESTRUCTURA", fontWeight = FontWeight.Black) }, text = { LazyColumn(Modifier.heightIn(max = 460.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+    AlertDialog(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(12.dp), title = { Text("ESTRUCTURA", fontWeight = FontWeight.Black) }, text = { LazyColumn(Modifier.heightIn(max = 460.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
         if (symbols.isEmpty()) item { Text("No se encontraron funciones ni clases.") }
-        items(symbols) { symbol -> Surface(onClick = { onGo(symbol.line) }, color = if (symbol.kind == "class") Pink else Blue, border = BorderStroke(2.dp, Ink), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) { Row(Modifier.padding(10.dp)) { Text(if (symbol.kind == "class") "C" else "ƒ", fontWeight = FontWeight.Black); Spacer(Modifier.width(10.dp)); Text(symbol.name, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Spacer(Modifier.weight(1f)); Text("L${symbol.line}", fontSize = 11.sp) } } }
+        items(symbols) { symbol -> val chip = if (symbol.kind == "class") Pink else Blue; Surface(onClick = { onGo(symbol.line) }, color = referenceColor(chip), contentColor = referenceContentColor(chip), border = BorderStroke(1.dp, referenceColor(Outline)), shape = RoundedCornerShape(5.dp), modifier = Modifier.fillMaxWidth()) { Row(Modifier.padding(10.dp)) { Text(if (symbol.kind == "class") "C" else "ƒ", fontWeight = FontWeight.Black); Spacer(Modifier.width(10.dp)); Text(symbol.name, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Spacer(Modifier.weight(1f)); Text("L${symbol.line}", fontSize = 11.sp) } } }
     } }, confirmButton = { BrutalButton("CERRAR", Yellow, onClick = onDismiss) })
 }
 
 @Composable private fun TrashDialog(project: File, onDismiss: () -> Unit, onChanged: () -> Unit) {
     var refresh by remember { mutableIntStateOf(0) }
     val trash = remember(project, refresh) { File(project, ".trash").listFiles()?.sortedByDescending { it.lastModified() } ?: emptyList() }
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Paper, shape = RoundedCornerShape(12.dp), title = { Text("PAPELERA", fontWeight = FontWeight.Black) }, text = { LazyColumn(Modifier.heightIn(max = 430.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    AlertDialog(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(12.dp), title = { Text("PAPELERA", fontWeight = FontWeight.Black) }, text = { LazyColumn(Modifier.heightIn(max = 430.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (trash.isEmpty()) item { Text("La papelera está vacía.") }
-        items(trash, key = { it.path }) { file -> Row(Modifier.fillMaxWidth().background(Color.White).border(2.dp, Ink).padding(8.dp), verticalAlignment = Alignment.CenterVertically) { Text(file.name.substringAfter("__"), Modifier.weight(1f), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); BrutalButton("RESTAURAR", Green) { restoreTrash(file, project); refresh++; onChanged() } } }
+        items(trash, key = { it.path }) { file -> Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline).padding(8.dp), verticalAlignment = Alignment.CenterVertically) { Text(file.name.substringAfter("__"), Modifier.weight(1f), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); BrutalButton("RESTAURAR", Green) { restoreTrash(file, project); refresh++; onChanged() } } }
     } }, confirmButton = { BrutalButton("CERRAR", Yellow, onClick = onDismiss) })
 }
 
 @Composable private fun VersionsDialog(file: File, onDismiss: () -> Unit, onRestore: (File) -> Unit) {
     val versions = remember(file) { File(file.parentFile, ".versions/${file.name}").listFiles()?.sortedByDescending { it.lastModified() } ?: emptyList() }
-    AlertDialog(onDismissRequest = onDismiss, containerColor = Paper, shape = RoundedCornerShape(12.dp), title = { Text("VERSIONES", fontWeight = FontWeight.Black) }, text = { LazyColumn(Modifier.heightIn(max = 430.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    AlertDialog(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(12.dp), title = { Text("VERSIONES", fontWeight = FontWeight.Black) }, text = { LazyColumn(Modifier.heightIn(max = 430.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (versions.isEmpty()) item { Text("Se creará una versión automática antes de cada ejecución.") }
-        items(versions, key = { it.path }) { version -> Row(Modifier.fillMaxWidth().background(Blue).border(2.dp, Ink).padding(9.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(java.text.SimpleDateFormat("dd MMM · HH:mm", java.util.Locale.getDefault()).format(java.util.Date(version.lastModified())), fontWeight = FontWeight.Bold); Text("${version.readLines().size} líneas", fontSize = 11.sp) }; BrutalButton("RESTAURAR", Green) { onRestore(version) } } }
+        items(versions, key = { it.path }) { version -> Row(Modifier.fillMaxWidth().background(referenceColor(Blue)).border(1.dp, referenceColor(Outline)).padding(9.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(java.text.SimpleDateFormat("dd MMM · HH:mm", java.util.Locale.getDefault()).format(java.util.Date(version.lastModified())), fontWeight = FontWeight.Bold); Text("${version.readLines().size} líneas", fontSize = 11.sp) }; BrutalButton("RESTAURAR", Green) { onRestore(version) } } }
     } }, confirmButton = { BrutalButton("CERRAR", Yellow, onClick = onDismiss) })
 }
 
 @Composable private fun InputDialog(prompt: String, onCancel: () -> Unit, onSubmit: (String) -> Unit) {
     var answer by remember(prompt) { mutableStateOf("") }
-    AlertDialog(onDismissRequest = {}, containerColor = Blue, shape = RoundedCornerShape(12.dp), title = { Text("RESPUESTA DEL SCRIPT", fontWeight = FontWeight.Black) }, text = { Column { Text(prompt, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Spacer(Modifier.height(10.dp)); OutlinedTextField(answer, { answer = it }, label = { Text("Tu respuesta") }, singleLine = true) } }, confirmButton = { BrutalButton("ENVIAR ↵", Green) { onSubmit(answer) } }, dismissButton = { TextButton(onClick = onCancel) { Text("DETENER SCRIPT", color = Ink, fontWeight = FontWeight.Black) } })
+    AlertDialog(onDismissRequest = {}, containerColor = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(5.dp), title = { Text("RESPUESTA DEL SCRIPT", fontWeight = FontWeight.Black) }, text = { Column { Text(prompt, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Spacer(Modifier.height(10.dp)); OutlinedTextField(answer, { answer = it }, label = { Text("Tu respuesta") }, singleLine = true) } }, confirmButton = { BrutalButton("ENVIAR ↵", Green) { onSubmit(answer) } }, dismissButton = { TextButton(onClick = onCancel) { Text("DETENER SCRIPT") } })
 }
 
 private object PythonHighlight : VisualTransformation {

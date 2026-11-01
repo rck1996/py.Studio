@@ -2,6 +2,8 @@
 
 Abre un script tocando su fila en Proyectos. El editor conserva resaltado Python, números de línea, autoguardado, búsqueda y versiones.
 
+Si una ejecución falla y la consola indica una línea, **IR A LÍNEA** abre el archivo realmente ejecutado (con sus cambios guardados) y desplaza el editor hasta dejar el cursor visible. Así puedes corregir y volver a ejecutar sin buscar manualmente el punto del error.
+
 ## Escritura móvil
 
 - **Deshacer / Rehacer:** disponibles en la barra superior incluso con el teclado abierto. El historial se separa al cambiar de archivo.
@@ -19,4 +21,4 @@ Las sugerencias incluyen nombres del código y scripts del proyecto. No ejecutan
 
 La lupa abre búsqueda y reemplazo. En **⋮** puedes depurar, consultar funciones y clases, recuperar versiones y ajustar el tamaño del texto.
 
-El panel del código conserva fondo oscuro para leer la sintaxis y evita la antigua sombra negra desplazada. El área exterior mantiene la identidad clara de Pixel Studio.
+El panel del código conserva fondo oscuro para leer la sintaxis en los dos temas. El resto del editor sigue los colores de superficie del tema activo y evita la antigua sombra desplazada. Consulta [Identidad visual](identidad-visual.md) para la paleta y contraste claro/oscuro.

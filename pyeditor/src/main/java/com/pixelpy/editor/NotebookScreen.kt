@@ -38,6 +38,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -69,12 +70,35 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
-private val NotebookInk = Color(0xFF202124)
-private val NotebookPaper = Color(0xFFFFFBF2)
-private val NotebookYellow = Color(0xFFFFE34D)
-private val NotebookBlue = Color(0xFFB5C4FF)
-private val NotebookGreen = Color(0xFFA1F3D0)
-private val NotebookPink = Color(0xFFFFCBD8)
+private val NotebookInk = Color(0xFF061124)
+private val NotebookYellow = Color(0xFF5E9EFF)
+private val NotebookBlue = Color(0xFF0C2244)
+private val NotebookGreen = Color(0xFF76ABFF)
+private val NotebookPink = Color(0xFFFF9C91)
+
+@Composable
+private fun notebookThemeColor(color: Color): Color {
+    val scheme = MaterialTheme.colorScheme
+    return when (color) {
+        NotebookYellow -> scheme.primary
+        NotebookGreen -> scheme.secondary
+        NotebookPink -> scheme.tertiary
+        NotebookBlue -> scheme.surfaceVariant
+        else -> color
+    }
+}
+
+@Composable
+private fun notebookThemeContentColor(color: Color): Color {
+    val scheme = MaterialTheme.colorScheme
+    return when (color) {
+        NotebookYellow -> scheme.onPrimary
+        NotebookGreen -> scheme.onSecondary
+        NotebookPink -> scheme.onTertiary
+        NotebookBlue -> scheme.onSurfaceVariant
+        else -> scheme.onSurface
+    }
+}
 
 @Composable
 internal fun NotebookScreen(
@@ -93,6 +117,8 @@ internal fun NotebookScreen(
     var renameNotebook by remember { mutableStateOf<PixelNotebook?>(null) }
     var actionsExpanded by remember { mutableStateOf(false) }
     var chartDialog by remember { mutableStateOf(false) }
+    var csvRevision by remember(project) { mutableIntStateOf(0) }
+    var csvImporting by remember { mutableStateOf(false) }
     var notebookQuery by remember { mutableStateOf("") }
     var notebookVariables by remember(project) { mutableStateOf<List<NotebookVariable>>(emptyList()) }
     var runningIndex by remember { mutableIntStateOf(-1) }
@@ -126,6 +152,26 @@ internal fun NotebookScreen(
                     } ?: error("No se pudo guardar el archivo")
                 }
             }.onFailure { importError = "No se pudo exportar el notebook: ${it.message}" }
+        }
+    }
+    val csvImportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            csvImporting = true
+            runCatching {
+                val displayName = context.contentResolver.query(uri, arrayOf("_display_name"), null, null, null)
+                    ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+                    .orEmpty()
+                val target = uniqueCsvImportTarget(project, displayName)
+                withContext(Dispatchers.IO) {
+                    val input = context.contentResolver.openInputStream(uri) ?: error("No se pudo abrir el archivo")
+                    input.use { copyCsvToProject(it, target) }
+                }
+                csvRevision++
+                onArtifactsChanged()
+                android.widget.Toast.makeText(context, "CSV agregado al proyecto", android.widget.Toast.LENGTH_SHORT).show()
+            }.onFailure { importError = "No se pudo importar el CSV: ${it.message}" }
+            csvImporting = false
         }
     }
 
@@ -224,25 +270,25 @@ internal fun NotebookScreen(
         }
     }
 
-    Column(Modifier.fillMaxSize().background(NotebookPaper).padding(14.dp)) {
+    Column(Modifier.fillMaxSize().technicalGridBackground().padding(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedButton(
                 onClick = onBack,
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(2.dp, NotebookInk),
-            ) { Text("← VOLVER", color = NotebookInk, fontWeight = FontWeight.Black) }
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            ) { Text("← VOLVER", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Black) }
             Spacer(Modifier.width(8.dp))
             Box(Modifier.weight(1f)) {
                 OutlinedButton(
                     onClick = { notebookQuery = ""; selector = true },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(2.dp, NotebookInk),
-                ) { Text(notebook.name, color = NotebookInk, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                ) { Text(notebook.name, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis) }
             }
             Spacer(Modifier.width(8.dp))
         }
-        Surface(color = NotebookYellow, border = BorderStroke(2.dp, NotebookInk), modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+        Surface(color = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline), modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("DATA LAB / ${project.name}", fontSize = 10.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(if (runningIndex >= 0) "Ejecutando celda ${runningIndex + 1} de ${notebook.cells.size}" else "${notebook.cells.size} celdas · tu espacio de análisis", fontSize = 15.sp, fontWeight = FontWeight.Black)
@@ -367,7 +413,7 @@ internal fun NotebookScreen(
         AlertDialog(
             onDismissRequest = { selector = false },
             shape = RoundedCornerShape(12.dp),
-            containerColor = NotebookPaper,
+            containerColor = MaterialTheme.colorScheme.background,
             title = { Text("MIS NOTEBOOKS", fontWeight = FontWeight.Black) },
             text = {
                 val visibleNotebooks = notebooks.filter { it.name.contains(notebookQuery, ignoreCase = true) }
@@ -388,19 +434,19 @@ internal fun NotebookScreen(
                         itemsIndexed(visibleNotebooks, key = { _, item -> item.id }) { _, item ->
                             val isActive = item.id == notebook.id
                             Column(
-                                Modifier.fillMaxWidth().background(if (item.id == notebook.id) NotebookYellow else Color.White)
-                                    .border(2.dp, NotebookInk).padding(10.dp),
+                                Modifier.fillMaxWidth().background(if (item.id == notebook.id) notebookThemeColor(NotebookBlue) else MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, MaterialTheme.colorScheme.outline).padding(10.dp),
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Column(Modifier.weight(1f)) {
-                                        Text(item.name, fontWeight = FontWeight.Black, color = NotebookInk)
-                                        Text("${item.cells.size} celdas", fontSize = 11.sp, color = NotebookInk)
+                                        Text(item.name, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
+                                        Text("${item.cells.size} celdas", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                                     }
                                     if (isActive) {
                                         Text(
                                             "ACTIVO",
-                                            modifier = Modifier.border(2.dp, NotebookInk).padding(horizontal = 6.dp, vertical = 2.dp),
-                                            color = NotebookInk,
+                                            modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.outline).padding(horizontal = 6.dp, vertical = 2.dp),
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Black,
                                         )
@@ -429,7 +475,7 @@ internal fun NotebookScreen(
                         }
                         if (visibleNotebooks.isEmpty()) {
                             item {
-                                Text("No hay notebooks que coincidan.", color = NotebookInk, fontWeight = FontWeight.Bold)
+                                Text("No hay notebooks que coincidan.", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -442,13 +488,16 @@ internal fun NotebookScreen(
                 }
             },
             dismissButton = {
-                NotebookButton("CERRAR", Color.White) { selector = false }
+                NotebookButton("CERRAR", MaterialTheme.colorScheme.surface) { selector = false }
             },
         )
     }
     if (chartDialog) {
         ChartBuilderDialog(
             project = project,
+            csvRevision = csvRevision,
+            csvImporting = csvImporting,
+            onImportCsv = { csvImportLauncher.launch(arrayOf("text/csv", "text/comma-separated-values", "application/vnd.ms-excel", "*/*")) },
             onDismiss = { chartDialog = false },
             onCreate = { source ->
                 persist(notebook.copy(cells = notebook.cells + NotebookCell(source = source)))
@@ -462,7 +511,7 @@ internal fun NotebookScreen(
         AlertDialog(
             onDismissRequest = { newDialog = false },
             shape = RoundedCornerShape(12.dp),
-            containerColor = NotebookYellow,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("NUEVO NOTEBOOK", fontWeight = FontWeight.Black) },
             text = { OutlinedTextField(name, { name = it }, label = { Text("Nombre") }, singleLine = true) },
             confirmButton = {
@@ -472,7 +521,7 @@ internal fun NotebookScreen(
                     newDialog = false
                 }
             },
-            dismissButton = { NotebookButton("CANCELAR", Color.White) { newDialog = false } },
+            dismissButton = { NotebookButton("CANCELAR", MaterialTheme.colorScheme.surface) { newDialog = false } },
         )
     }
     renameNotebook?.let { target ->
@@ -480,7 +529,7 @@ internal fun NotebookScreen(
         AlertDialog(
             onDismissRequest = { renameNotebook = null },
             shape = RoundedCornerShape(12.dp),
-            containerColor = NotebookYellow,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("RENOMBRAR NOTEBOOK", fontWeight = FontWeight.Black) },
             text = { OutlinedTextField(name, { name = it }, label = { Text("Nombre") }, singleLine = true) },
             confirmButton = { NotebookButton("GUARDAR", NotebookGreen, enabled = name.isNotBlank()) {
@@ -489,14 +538,14 @@ internal fun NotebookScreen(
                 if (notebook.id == renamed.id) notebook = renamed
                 renameNotebook = null
             } },
-            dismissButton = { NotebookButton("CANCELAR", Color.White) { renameNotebook = null } },
+            dismissButton = { NotebookButton("CANCELAR", MaterialTheme.colorScheme.surface) { renameNotebook = null } },
         )
     }
     importError?.let { message ->
         AlertDialog(
             onDismissRequest = { importError = null },
             shape = RoundedCornerShape(12.dp),
-            containerColor = NotebookYellow,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("IMPORTACIÓN FALLIDA", fontWeight = FontWeight.Black) },
             text = { Text(message) },
             confirmButton = { NotebookButton("CERRAR", NotebookGreen) { importError = null } },
@@ -507,16 +556,25 @@ internal fun NotebookScreen(
 @Composable
 private fun ChartBuilderDialog(
     project: File,
+    csvRevision: Int,
+    csvImporting: Boolean,
+    onImportCsv: () -> Unit,
     onDismiss: () -> Unit,
     onCreate: (String) -> Unit,
 ) {
-    val csvFiles = remember(project, project.lastModified()) {
+    val csvFiles = remember(project, csvRevision, project.lastModified()) {
         project.walkTopDown().maxDepth(5).filter { it.isFile && it.extension.equals("csv", true) }
             .take(100).toList().sortedBy { it.relativeTo(project).invariantSeparatorsPath.lowercase() }
     }
     var selectedFile by remember(csvFiles) { mutableStateOf(csvFiles.firstOrNull()) }
     val headers = remember(selectedFile, selectedFile?.lastModified()) {
-        selectedFile?.let { runCatching { parseCsvPreview(it.readText(Charsets.UTF_8), 1).headers }.getOrDefault(emptyList()) }
+        selectedFile?.let { file -> runCatching {
+            file.inputStream().bufferedReader(Charsets.UTF_8).use { reader ->
+                val prefix = CharArray(128 * 1024)
+                val count = reader.read(prefix).coerceAtLeast(0)
+                parseCsvPreview(String(prefix, 0, count), 1).headers
+            }
+        }.getOrDefault(emptyList()) }
             ?: emptyList()
     }
     var xColumn by remember(selectedFile) { mutableStateOf(headers.firstOrNull().orEmpty()) }
@@ -533,12 +591,20 @@ private fun ChartBuilderDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(12.dp),
-        containerColor = NotebookPaper,
+            containerColor = MaterialTheme.colorScheme.background,
         title = { Text("CREAR GRÁFICO", fontWeight = FontWeight.Black) },
         text = {
             Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 if (csvFiles.isEmpty()) {
-                    Text("Agrega un archivo CSV al proyecto para crear un gráfico.", fontWeight = FontWeight.Bold)
+                    Text("Todavía no hay un CSV en este proyecto.", fontWeight = FontWeight.Black)
+                    Text("Impórtalo aquí para continuar. Se guardará en la raíz del proyecto y quedará disponible en Recursos.", fontSize = 12.sp)
+                    NotebookButton(
+                        if (csvImporting) "IMPORTANDO…" else "SELECCIONAR CSV",
+                        NotebookBlue,
+                        Modifier.fillMaxWidth(),
+                        enabled = !csvImporting,
+                        onClick = onImportCsv,
+                    )
                 } else {
                     ChartChoice("ARCHIVO CSV", selectedFile?.relativeTo(project)?.invariantSeparatorsPath.orEmpty(), csvFiles.map { it.relativeTo(project).invariantSeparatorsPath }) { value ->
                         selectedFile = File(project, value)
@@ -569,7 +635,7 @@ private fun ChartBuilderDialog(
                 onCreate(chartCellSource(relative, xColumn, yColumn, kind, title))
             }
         },
-        dismissButton = { NotebookButton("CANCELAR", Color.White, onClick = onDismiss) },
+        dismissButton = { NotebookButton("CANCELAR", MaterialTheme.colorScheme.surface, onClick = onDismiss) },
     )
 }
 
@@ -583,8 +649,8 @@ private fun ChartChoice(label: String, value: String, choices: List<String>, onC
                 onClick = { expanded = true },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(2.dp, NotebookInk),
-            ) { Text("${value.ifBlank { "SELECCIONAR" }}  ▾", color = NotebookInk, fontWeight = FontWeight.Black) }
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            ) { Text("${value.ifBlank { "SELECCIONAR" }}  ▾", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Black) }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 choices.forEach { choice ->
                     DropdownMenuItem(text = { Text(choice) }, onClick = { expanded = false; onChoice(choice) })
@@ -627,19 +693,19 @@ private fun NotebookCellCard(
     onMove: (Int) -> Unit,
     onDelete: () -> Unit,
 ) {
-    val accent = if (cell.type == NotebookCellType.Code) NotebookBlue else NotebookPink
+    val accent = notebookThemeColor(if (cell.type == NotebookCellType.Code) NotebookBlue else NotebookPink)
     var markdownPreview by remember(cell.id) { mutableStateOf(cell.type == NotebookCellType.Markdown) }
     var actionsExpanded by remember(cell.id) { mutableStateOf(false) }
     var outputExpanded by remember(cell.id) { mutableStateOf(true) }
     Surface(
-        color = Color.White,
-        border = BorderStroke(2.dp, NotebookInk),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(34.dp).background(accent).border(2.dp, NotebookInk), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(34.dp).background(accent).border(1.dp, MaterialTheme.colorScheme.outline), contentAlignment = Alignment.Center) {
                     Text("${index + 1}", fontWeight = FontWeight.Black)
                 }
                 Spacer(Modifier.width(8.dp))
@@ -683,18 +749,18 @@ private fun NotebookCellCard(
                     )
                 }
                 if (cell.output.isNotBlank()) {
-                    Surface(onClick = { outputExpanded = !outputExpanded }, color = if (cell.status == NotebookCellStatus.Stale) NotebookYellow else NotebookPaper, border = BorderStroke(1.dp, NotebookInk), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Surface(onClick = { outputExpanded = !outputExpanded }, color = if (cell.status == NotebookCellStatus.Stale) notebookThemeColor(NotebookYellow) else MaterialTheme.colorScheme.surface, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline), shape = RoundedCornerShape(5.dp), modifier = Modifier.fillMaxWidth()) {
                         Text("${if (outputExpanded) "▾" else "▸"} SALIDA${if (cell.status == NotebookCellStatus.Stale) " · DESACTUALIZADA" else ""}", Modifier.padding(8.dp, 5.dp), fontWeight = FontWeight.Black, fontSize = 10.sp)
                     }
-                    if (outputExpanded) Text(cell.output, Modifier.fillMaxWidth().background(NotebookInk).padding(10.dp), color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                    if (outputExpanded) Text(cell.output, Modifier.fillMaxWidth().background(Color(0xFF041126)).padding(10.dp), color = Color.White, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
                 }
                 cell.results.forEach { result ->
                     NotebookRichResult(result = result, project = project, stale = cell.status == NotebookCellStatus.Stale)
                 }
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    NotebookButton("VISTA", if (markdownPreview) NotebookYellow else Color.White, Modifier.weight(1f)) { markdownPreview = true }
-                    NotebookButton("EDITAR", if (!markdownPreview) NotebookYellow else Color.White, Modifier.weight(1f)) { markdownPreview = false }
+                    NotebookButton("VISTA", if (markdownPreview) NotebookYellow else MaterialTheme.colorScheme.surface, Modifier.weight(1f)) { markdownPreview = true }
+                    NotebookButton("EDITAR", if (!markdownPreview) NotebookYellow else MaterialTheme.colorScheme.surface, Modifier.weight(1f)) { markdownPreview = false }
                 }
                 if (markdownPreview) {
                     NotebookMarkdownPreview(cell.source)
@@ -717,8 +783,9 @@ private fun NotebookVariableInspector(variables: List<NotebookVariable>) {
     var expanded by remember { mutableStateOf(false) }
     Surface(
         onClick = { expanded = !expanded },
-        color = NotebookYellow,
-        border = BorderStroke(2.dp, NotebookInk),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -729,7 +796,7 @@ private fun NotebookVariableInspector(variables: List<NotebookVariable>) {
             }
             if (expanded) {
                 variables.forEach { variable ->
-                    Column(Modifier.fillMaxWidth().background(Color.White).border(1.dp, NotebookInk).padding(8.dp)) {
+                    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline).padding(8.dp)) {
                         Text(variable.name, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
                         Text(
                             buildString {
@@ -751,8 +818,8 @@ private fun NotebookVariableInspector(variables: List<NotebookVariable>) {
 private fun NotebookRichResult(result: NotebookResult, project: File, stale: Boolean) {
     Column(
         Modifier.fillMaxWidth()
-            .background(if (stale) NotebookYellow else NotebookPaper)
-            .border(2.dp, NotebookInk)
+            .background(if (stale) notebookThemeColor(NotebookYellow) else MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline)
             .padding(9.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -772,7 +839,7 @@ private fun NotebookRichResult(result: NotebookResult, project: File, stale: Boo
                 }
                 Text(
                     formatted,
-                    Modifier.fillMaxWidth().background(NotebookInk).horizontalScroll(rememberScrollState()).padding(9.dp),
+                    Modifier.fillMaxWidth().background(Color(0xFF041126)).horizontalScroll(rememberScrollState()).padding(9.dp),
                     color = Color.White,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 11.sp,
@@ -828,11 +895,11 @@ private fun NotebookInlineTable(raw: String) {
 
 @Composable
 private fun NotebookTableRow(values: List<String>, header: Boolean = false, shaded: Boolean = false) {
-    Row(Modifier.background(if (header) NotebookYellow else if (shaded) Color(0xFFF1F4F6) else Color.White)) {
+    Row(Modifier.background(if (header) notebookThemeColor(NotebookYellow) else if (shaded) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)) {
         values.forEach { value ->
             Text(
                 value.ifEmpty { " " },
-                Modifier.width(132.dp).border(1.dp, NotebookInk).padding(8.dp),
+                Modifier.width(132.dp).border(1.dp, MaterialTheme.colorScheme.outline).padding(8.dp),
                 fontFamily = FontFamily.Monospace,
                 fontWeight = if (header) FontWeight.Black else FontWeight.Normal,
                 fontSize = 10.sp,
@@ -846,7 +913,7 @@ private fun NotebookTableRow(values: List<String>, header: Boolean = false, shad
 private fun NotebookMarkdownPreview(source: String) {
     val blocks = remember(source) { parseNotebookMarkdown(source) }
     Column(
-        Modifier.fillMaxWidth().background(NotebookPaper).border(2.dp, NotebookInk).padding(12.dp),
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline).padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (blocks.isEmpty()) Text("Sin contenido Markdown.", color = Color.Gray)
@@ -867,12 +934,12 @@ private fun NotebookMarkdownPreview(source: String) {
                 }
                 is NotebookMarkdownBlock.Quote -> Text(
                     markdownInline(block.text),
-                    Modifier.fillMaxWidth().border(2.dp, NotebookBlue).padding(10.dp),
+                    Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline).padding(10.dp),
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                 )
                 is NotebookMarkdownBlock.Code -> Text(
                     block.text,
-                    Modifier.fillMaxWidth().background(NotebookInk).padding(10.dp),
+                    Modifier.fillMaxWidth().background(Color(0xFF041126)).padding(10.dp),
                     color = Color.White,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 13.sp,
@@ -909,9 +976,9 @@ private fun NotebookButton(
     androidx.compose.material3.Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.border(2.dp, NotebookInk),
-        colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = NotebookInk),
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.border(1.dp, MaterialTheme.colorScheme.outline),
+        colors = ButtonDefaults.buttonColors(containerColor = notebookThemeColor(color), contentColor = notebookThemeContentColor(color)),
+        shape = RoundedCornerShape(5.dp),
     ) {
         Text(label, fontWeight = FontWeight.Black, fontSize = 11.sp)
     }

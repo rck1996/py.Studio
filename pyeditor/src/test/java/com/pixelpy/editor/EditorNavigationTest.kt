@@ -7,6 +7,15 @@ import org.junit.Test
 
 class EditorNavigationTest {
     @Test
+    fun lineStartOffsetClampsToSourceAndHandlesInvalidLines() {
+        val source = "one\ntwo\nthree"
+
+        assertEquals(0, editorLineStartOffset(source, 0))
+        assertEquals(4, editorLineStartOffset(source, 2))
+        assertEquals(source.length, editorLineStartOffset(source, 20))
+    }
+
+    @Test
     fun goToLineReadsCurrentFileInsteadOfLastRunSnapshot() {
         val file = Files.createTempFile("pixelpy-navigation", ".py").toFile()
         try {

@@ -27,6 +27,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -66,12 +67,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private val AutomationInk = Color(0xFF191919)
-private val AutomationPaper = Color(0xFFFFFBF2)
-private val AutomationYellow = Color(0xFFFFE34D)
-private val AutomationPink = Color(0xFFFFCBD8)
-private val AutomationBlue = Color(0xFFB5C4FF)
-private val AutomationGreen = Color(0xFFA1F3D0)
+@Composable
+private fun automationStatusColor(status: AutomationRunStatus): Color = when (status) {
+    AutomationRunStatus.Success -> Color(0xFF2E7D32)
+    AutomationRunStatus.Error -> Color(0xFFC62828)
+    AutomationRunStatus.Running -> MaterialTheme.colorScheme.surfaceVariant
+    AutomationRunStatus.Pending -> MaterialTheme.colorScheme.primary
+}
+
+@Composable
+private fun automationStatusContentColor(status: AutomationRunStatus): Color = when (status) {
+    AutomationRunStatus.Success, AutomationRunStatus.Error -> Color.White
+    AutomationRunStatus.Running -> MaterialTheme.colorScheme.onSurfaceVariant
+    AutomationRunStatus.Pending -> MaterialTheme.colorScheme.onPrimary
+}
 
 @Composable
 internal fun AutomationScreen(
@@ -124,7 +133,7 @@ internal fun AutomationScreen(
     }
 
     LazyColumn(
-        Modifier.fillMaxSize().testTag("automation-screen").background(AutomationPaper).padding(16.dp),
+        Modifier.fillMaxSize().testTag("automation-screen").technicalGridBackground().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
@@ -140,7 +149,7 @@ internal fun AutomationScreen(
             Text("AUTOMATIZACIONES", fontWeight = FontWeight.Black, fontSize = 28.sp)
             Text("Ejecuta scripts aunque PixelPy no esté abierto y conserva un resultado listo para compartir.")
             Spacer(Modifier.height(8.dp))
-            Surface(color = AutomationYellow, modifier = Modifier.fillMaxWidth().border(2.dp, AutomationInk)) {
+            Surface(color = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline)) {
                 Text(
                     "Los horarios son aproximados. Android puede retrasarlos por batería, Doze o restricciones del sistema.",
                     Modifier.padding(12.dp),
@@ -151,7 +160,7 @@ internal fun AutomationScreen(
         }
         if (automations.isEmpty()) {
             item {
-                AutomationPanel(Color.White) {
+                AutomationPanel(MaterialTheme.colorScheme.surface) {
                     Text("AÚN NO HAY AUTOMATIZACIONES", fontWeight = FontWeight.Black)
                     Text("Crea una para ejecutar el script actual ahora, diariamente o cada semana.")
                 }
@@ -233,16 +242,11 @@ private fun AutomationCard(
     onDetails: () -> Unit,
 ) {
     var moreActions by remember(automation.id) { mutableStateOf(false) }
-    val statusColor = when (automation.lastStatus) {
-        AutomationRunStatus.Success -> AutomationGreen
-        AutomationRunStatus.Error -> AutomationPink
-        AutomationRunStatus.Running -> AutomationBlue
-        AutomationRunStatus.Pending -> AutomationYellow
-    }
-    AutomationPanel(Color.White, Modifier.testTag("automation-${automation.id}")) {
+    val statusColor = automationStatusColor(automation.lastStatus)
+    AutomationPanel(MaterialTheme.colorScheme.surface, Modifier.testTag("automation-${automation.id}")) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.background(statusColor).border(2.dp, AutomationInk).padding(horizontal = 9.dp, vertical = 6.dp)) {
-                Text(automation.lastStatus.displayName(), fontWeight = FontWeight.Black, fontSize = 10.sp)
+            Box(Modifier.background(statusColor).border(1.dp, MaterialTheme.colorScheme.outline).padding(horizontal = 9.dp, vertical = 6.dp)) {
+                Text(automation.lastStatus.displayName(), color = automationStatusContentColor(automation.lastStatus), fontWeight = FontWeight.Black, fontSize = 10.sp)
             }
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
@@ -285,12 +289,7 @@ private fun AutomationDetailsDialog(
 ) {
     val context = LocalContext.current
     val latest = automation.runHistory.lastOrNull()
-    val statusColor = when (automation.lastStatus) {
-        AutomationRunStatus.Success -> AutomationGreen
-        AutomationRunStatus.Error -> AutomationPink
-        AutomationRunStatus.Running -> AutomationBlue
-        AutomationRunStatus.Pending -> AutomationYellow
-    }
+    val statusColor = automationStatusColor(automation.lastStatus)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("DIAGNÓSTICO", fontWeight = FontWeight.Black) },
@@ -299,17 +298,18 @@ private fun AutomationDetailsDialog(
                 Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Surface(color = statusColor, modifier = Modifier.border(2.dp, AutomationInk)) {
+                Surface(color = statusColor, modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.outline)) {
                     Text(
                         automation.lastStatus.displayName(),
                         Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                        color = automationStatusContentColor(automation.lastStatus),
                         fontWeight = FontWeight.Black,
                     )
                 }
                 Text(automation.name, fontWeight = FontWeight.Black, fontSize = 20.sp)
                 Text("${automation.projectPath}/${automation.scriptPath}", fontFamily = FontFamily.Monospace, fontSize = 11.sp)
                 Text("CAUSA / SALIDA", fontWeight = FontWeight.Black, fontSize = 11.sp)
-                Surface(color = Color.White, modifier = Modifier.fillMaxWidth().border(2.dp, AutomationInk)) {
+                Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline)) {
                     Text(
                         automation.summary.ifBlank { "Todavía no hay un diagnóstico." },
                         Modifier.padding(10.dp),
@@ -391,7 +391,7 @@ private fun AutomationPanel(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface(modifier.fillMaxWidth().border(2.dp, AutomationInk), color = color, shape = RoundedCornerShape(12.dp)) {
+    Surface(modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline), color = color, shape = RoundedCornerShape(8.dp)) {
         Column(Modifier.padding(12.dp), content = content)
     }
 }
@@ -440,7 +440,7 @@ private fun AutomationEditorDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(12.dp),
-        containerColor = AutomationPaper,
+        containerColor = MaterialTheme.colorScheme.background,
         title = { Text(if (repositoryStyleIsNew(initial)) "NUEVA AUTOMATIZACIÓN" else "EDITAR AUTOMATIZACIÓN", fontWeight = FontWeight.Black) },
         text = {
             Column(Modifier.heightIn(max = 610.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -502,7 +502,7 @@ private fun AutomationEditorDialog(
                 if (parametersExpanded) {
                     Text("Disponibles mediante os.getenv(\"NOMBRE\"). Los secretos permanecen ocultos en pantalla.", fontSize = 11.sp)
                     parameterDefinitions.forEachIndexed { index, parameter ->
-                    Column(Modifier.fillMaxWidth().border(2.dp, AutomationInk).padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Column(Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline).padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             OutlinedTextField(parameter.name, { value ->
                                 parameterDefinitions = parameterDefinitions.toMutableList().also { it[index] = parameter.copy(name = value.uppercase()) }

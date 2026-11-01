@@ -193,7 +193,7 @@ class AutomationWidgetProvider : AppWidgetProvider() {
                 setTextViewText(R.id.widget_artifact_meta, state.artifactMeta)
                 setInt(R.id.widget_status, "setBackgroundResource", state.status.backgroundRes)
                 setTextViewText(R.id.widget_section_label, state.sectionLabel)
-                setTextColor(R.id.widget_open, if (state.canOpen) 0xFF191919.toInt() else 0xFF9A9489.toInt())
+                setTextColor(R.id.widget_open, if (state.canOpen) 0xFFBAC4D4.toInt() else 0xFF6F7D91.toInt())
                 if (id != null) {
                     setOnClickPendingIntent(R.id.widget_open, resultIntent(context, widgetId, id, state.canOpen))
                     setOnClickPendingIntent(R.id.widget_run, actionIntent(context, widgetId, id, ACTION_RUN, 2))
@@ -293,9 +293,31 @@ private fun WidgetAutomationPicker(
     onSelected: (String) -> Unit,
 ) {
     val automations by repository.automations.collectAsState()
-    MaterialTheme {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val darkMode = context.getSharedPreferences("pixelpy", Context.MODE_PRIVATE).getBoolean("dark_mode", true)
+    val widgetScheme = if (darkMode) androidx.compose.material3.darkColorScheme(
+        primary = Color(0xFF5E9EFF), onPrimary = Color(0xFF061124),
+        primaryContainer = Color(0xFF1E3A64), onPrimaryContainer = Color(0xFFDCE8FF),
+        secondaryContainer = Color(0xFF183153), onSecondaryContainer = Color(0xFFDDE8FF),
+        background = Color(0xFF020B1B), surface = Color(0xFF041126),
+        secondary = Color(0xFF76ABFF), onSecondary = Color(0xFF061124),
+        surfaceVariant = Color(0xFF0C2244), onSurfaceVariant = Color(0xFFF1EDDF),
+        onBackground = Color(0xFFF1EDDF), onSurface = Color(0xFFF1EDDF),
+        outline = Color(0xFF243753),
+    ) else androidx.compose.material3.lightColorScheme(
+        primary = Color(0xFFE34B12), onPrimary = Color(0xFFFFF8EB),
+        secondary = Color(0xFFD83F0D), onSecondary = Color(0xFFFFF8EB),
+        primaryContainer = Color(0xFFF4C2B1), onPrimaryContainer = Color(0xFF5C1C07),
+        secondaryContainer = Color(0xFFF7D9CB), onSecondaryContainer = Color(0xFF4B2112),
+        tertiaryContainer = Color(0xFFF0EBE0), onTertiaryContainer = Color(0xFF171919),
+        background = Color(0xFFE9E4DA), surface = Color(0xFFF5F1E7),
+        surfaceVariant = Color(0xFFEAE9DF), onSurfaceVariant = Color(0xFF171919),
+        onBackground = Color(0xFF171919), onSurface = Color(0xFF171919),
+        outline = Color(0xFFA9A69C),
+    )
+    MaterialTheme(colorScheme = widgetScheme) {
         Column(
-            Modifier.fillMaxSize().background(Color(0xFFFFF8E7)).verticalScroll(rememberScrollState()).padding(18.dp),
+            Modifier.fillMaxSize().technicalGridBackground().verticalScroll(rememberScrollState()).padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text("CONFIGURAR WIDGET", fontSize = 25.sp, fontWeight = FontWeight.Black)
@@ -305,14 +327,14 @@ private fun WidgetAutomationPicker(
             }
             automations.forEach { automation ->
                 Surface(
-                    modifier = Modifier.fillMaxWidth().border(3.dp, Color(0xFF191919)).clickable { onSelected(automation.id) },
-                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline).clickable { onSelected(automation.id) },
+                    color = MaterialTheme.colorScheme.surface,
                 ) {
                     Column(Modifier.padding(14.dp)) {
                         Text(automation.name, fontWeight = FontWeight.Black)
                         Text("${automation.projectPath}/${automation.scriptPath}", fontSize = 12.sp)
                         automationWidgetConfigurationNotice(automation)?.let { notice ->
-                            Text(notice, fontSize = 12.sp, color = Color(0xFF6B6457))
+                            Text(notice, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f))
                         }
                     }
                 }

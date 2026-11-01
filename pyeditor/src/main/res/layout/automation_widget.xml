@@ -18,8 +18,8 @@
             android:layout_height="34dp"
             android:background="@drawable/automation_widget_logo_background"
             android:gravity="center"
-            android:text="P›"
-            android:textColor="#FFD43B"
+            android:text="‹›"
+            android:textColor="#5E9EFF"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -35,7 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="PIXELPY AUTO"
-                android:textColor="#6B6457"
+                android:textColor="#BAC4D4"
                 android:textSize="8sp"
                 android:textStyle="bold" />
 
@@ -46,7 +46,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="REPORTE DIARIO"
-                android:textColor="#191919"
+                android:textColor="#F1EDDF"
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -61,7 +61,7 @@
             android:paddingStart="7dp"
             android:paddingEnd="7dp"
             android:text="PENDIENTE"
-            android:textColor="#191919"
+            android:textColor="#061124"
             android:textSize="8sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -74,7 +74,7 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:text="Todavía no se ejecutó"
-        android:textColor="#6B6457"
+        android:textColor="#BAC4D4"
         android:textSize="9sp" />
 
     <LinearLayout
@@ -95,7 +95,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="●  RESULTADO PUBLICADO"
-            android:textColor="#6B6457"
+            android:textColor="#BAC4D4"
             android:textSize="8sp"
             android:textStyle="bold" />
 
@@ -106,7 +106,7 @@
             android:ellipsize="middle"
             android:maxLines="1"
             android:text="Sin resultado publicado"
-            android:textColor="#191919"
+            android:textColor="#F1EDDF"
             android:textSize="11sp"
             android:textStyle="bold" />
 
@@ -118,7 +118,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="24 KB · copia segura"
-            android:textColor="#6B6457"
+            android:textColor="#BAC4D4"
             android:textSize="8sp" />
     </LinearLayout>
 
@@ -136,7 +136,7 @@
             android:background="@drawable/automation_widget_button_secondary"
             android:gravity="center"
             android:text="VER RESULTADO"
-            android:textColor="#191919"
+            android:textColor="#BAC4D4"
             android:textSize="10sp"
             android:textStyle="bold" />
 
@@ -153,7 +153,7 @@
             android:background="@drawable/automation_widget_button_primary"
             android:gravity="center"
             android:text="▶  EJECUTAR"
-            android:textColor="#FFD43B"
+            android:textColor="#061124"
             android:textSize="10sp"
             android:textStyle="bold" />
     </LinearLayout>
