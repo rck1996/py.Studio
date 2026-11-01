@@ -16,7 +16,7 @@ Consulta también los [recorridos y criterios de experiencia de usuario](docs/ex
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-B9B3A8?logo=python&logoColor=111111)
 ![Verificación Android](https://github.com/rck1996/py.Studio/actions/workflows/android.yml/badge.svg)
 
-> **Distribución:** la release estable actual es **1.8.0**, bajo la identidad anterior. El candidato **1.9.0** de py.Studio ya pasó la validación local; GitHub compilará y adjuntará el APK firmado al completar el flujo del tag. Las capturas muestran previews en Tab S8 y Galaxy S25+, no una release publicada. Revisa [Releases](https://github.com/rck1996/py.Studio/releases) para descargar la versión estable.
+> **Distribución:** **py.Studio 1.9.0** ya está publicada con APK firmado. Es compatible con instalaciones anteriores porque conserva el identificador de aplicación. Las capturas muestran la preview visual en Tab S8 y Galaxy S25+; el APK de distribución está en [Releases](https://github.com/rck1996/py.Studio/releases/tag/v1.9.0).
 
 [Recorrido](#capturas) · [Empezar](#primeros-pasos) · [Compilar](#compilar) · [Calidad](#calidad) · [Documentación](#documentación)
 
@@ -180,7 +180,7 @@ El APK se genera en `pyeditor/build/outputs/apk/development/debug/`.
 
 ## Versión
 
-La versión más reciente publicada sigue siendo `1.8.0` (publicada bajo la identidad anterior). El candidato `1.9.0` conserva el ID de aplicación para actualizar instalaciones existentes; su APK firmado se publicará al completar el flujo de GitHub Actions. Consulta [Releases](https://github.com/rck1996/py.Studio/releases) para verificar APKs publicados.
+La versión más reciente es [`py.Studio 1.9.0`](https://github.com/rck1996/py.Studio/releases/tag/v1.9.0). Su APK de producción está firmado y adjunto al release. Se conserva el ID `com.pixelpy.editor` para actualizar instalaciones existentes sin cambiar sus datos.
 
 Las ejecuciones programadas son aproximadas: Android puede retrasarlas por batería, Doze o restricciones del sistema.
 
@@ -195,10 +195,10 @@ Los proyectos, automatizaciones y resultados publicados se guardan localmente. p
 | Build | Resultado | Evidencia |
 | --- | --- | --- |
 | Release estable 1.8.0 | 67 pruebas unitarias; instalación, navegación y `input()` en Galaxy S25+ · Android 16 | [Recorridos y verificación histórica](docs/experiencia-de-usuario.md) |
-| Candidato py.Studio 1.9.0 · 2026-11-01 | 76 pruebas, lint, APK de producción compilado; capturas de Proyectos, Editor y Notebook en claro/oscuro en Tab S8 y Galaxy S25+ | [Informe de QA](docs/QA_REPORT.md) |
+| py.Studio 1.9.0 · 2026-11-01 | 76 pruebas, lint y APK de producción firmado; Proyectos, Editor y Notebook en claro/oscuro revisados en Tab S8 y Galaxy S25+ | [Release y APK](https://github.com/rck1996/py.Studio/releases/tag/v1.9.0) · [Informe de QA](docs/QA_REPORT.md) |
 | Cobertura por completar | Accesibilidad exhaustiva, variaciones de ventana y todos los escenarios de segundo plano | [Límites de validación](docs/experiencia-de-usuario.md) |
 
-El badge superior informa CI; las filas describen verificaciones locales de builds identificadas por separado. No presentan la vista previa como release.
+El badge superior informa CI; el APK publicado y las verificaciones locales se identifican por separado.
 
 ## Documentación
 

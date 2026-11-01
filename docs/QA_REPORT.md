@@ -16,7 +16,7 @@ La app estable `com.pixelpy.editor` no se reemplazó durante esta verificación.
 
 ## Cambio de identidad py.Studio
 
-El repositorio y los recursos de marca ya usan py.Studio, con símbolo de capas y paleta naranja/crema/negro/neutro. La preview se compiló, instaló y revisó en Tab S8 y Galaxy S25+; las capturas de Proyectos, Editor y Notebook en ambos temas están en [la galería py.Studio](screenshots/README.md). Se verificaron nombre e isotipo de cabecera; la app estable no se reemplazó. Esta verificación visual no es una release.
+El repositorio y los recursos de marca ya usan py.Studio, con símbolo de capas y paleta naranja/crema/negro/neutro. La preview se compiló, instaló y revisó en Tab S8 y Galaxy S25+; las capturas de Proyectos, Editor y Notebook en ambos temas están en [la galería py.Studio](screenshots/README.md). Se verificaron nombre e isotipo de cabecera; la app estable no se reemplazó durante la prueba. La versión [1.9.0](https://github.com/rck1996/py.Studio/releases/tag/v1.9.0) ya se publicó con APK firmado.
 
 En el Galaxy S25+ (SM-S936B, Android 16, 1080 × 2340) el notebook cambia a menú desplegable de acciones, el diálogo de apariencia cabe y el tema se puede cambiar con el selector de densidad expandido. En Editor, tanto la tira de archivos como la fila de teclas auxiliares admiten desplazamiento horizontal para alcanzar sus elementos, aunque el contenido parcial en el borde no hace obvio ese gesto. Se registra como oportunidad de mejora de descubrimiento, no como bloqueo funcional. Evidencia visual: [capturas del S25+](screenshots/README.md).
 
