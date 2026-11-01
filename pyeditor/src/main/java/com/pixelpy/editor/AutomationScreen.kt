@@ -147,7 +147,7 @@ internal fun AutomationScreen(
             }
             Spacer(Modifier.height(12.dp))
             Text("AUTOMATIZACIONES", fontWeight = FontWeight.Black, fontSize = 28.sp)
-            Text("Ejecuta scripts aunque PixelPy no esté abierto y conserva un resultado listo para compartir.")
+            Text("Ejecuta scripts aunque py.Studio no esté abierto y conserva un resultado listo para compartir.")
             Spacer(Modifier.height(8.dp))
             Surface(color = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline)) {
                 Text(
@@ -197,7 +197,7 @@ internal fun AutomationScreen(
                         result
                             .onSuccess { editorVisible = false }
                             .onFailure {
-                                android.util.Log.e("PixelPyAutomation", "No se pudo guardar la automatización", it)
+                                android.util.Log.e("PyStudioAutomation", "No se pudo guardar la automatización", it)
                                 android.widget.Toast.makeText(context, it.message ?: "No se pudo guardar", android.widget.Toast.LENGTH_LONG).show()
                             }
                     }
@@ -349,7 +349,7 @@ private fun AutomationDetailsDialog(
             Row(Modifier.horizontalScroll(rememberScrollState())) {
                 TextButton(onClick = {
                     val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
-                    clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("PixelPy diagnóstico", automationDiagnosticText(automation)))
+                    clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("py.Studio · diagnóstico", automationDiagnosticText(automation)))
                     android.widget.Toast.makeText(context, "Diagnóstico copiado", android.widget.Toast.LENGTH_SHORT).show()
                 }) { Text("COPIAR DIAGNÓSTICO") }
                 Button(onClick = onRetry, enabled = automation.enabled) { Text("REINTENTAR") }
@@ -360,7 +360,7 @@ private fun AutomationDetailsDialog(
 }
 
 internal fun automationDiagnosticText(automation: ScriptAutomation): String = buildString {
-    appendLine("PIXELPY AUTOMATION")
+    appendLine("PY.STUDIO AUTOMATION")
     appendLine("Nombre: ${automation.name}")
     appendLine("Script: ${automation.projectPath}/${automation.scriptPath}")
     appendLine("Estado: ${automation.lastStatus.displayName()}")

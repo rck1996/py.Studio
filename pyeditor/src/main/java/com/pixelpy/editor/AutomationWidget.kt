@@ -69,9 +69,9 @@ internal data class AutomationWidgetState(
 internal fun automationWidgetState(automation: ScriptAutomation?): AutomationWidgetState {
     if (automation == null) {
         return AutomationWidgetState(
-            name = "PIXELPY",
+            name = "py.Studio",
             status = AutomationWidgetStatus.Unavailable,
-            updated = "Abre PixelPy para configurarla",
+            updated = "Abre py.Studio para configurarla",
             artifactName = "Sin resultado",
             artifactMeta = "La automatización fue eliminada o no está disponible",
             sectionLabel = "ESTADO",
@@ -116,7 +116,7 @@ internal fun automationWidgetConfigurationNotice(automation: ScriptAutomation): 
 
 internal fun compactWidgetSummary(summary: String): String = summary
     .replace(Regex("\\s+"), " ").trim()
-    .ifBlank { "Abre PixelPy para ver el diagnóstico" }.take(96)
+    .ifBlank { "Abre py.Studio para ver el diagnóstico" }.take(96)
 
 private fun formatWidgetTime(millis: Long): String = Instant.ofEpochMilli(millis)
     .atZone(ZoneId.systemDefault())

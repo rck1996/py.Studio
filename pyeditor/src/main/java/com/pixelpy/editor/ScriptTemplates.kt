@@ -51,7 +51,7 @@ for enlace in soup.select("a[href]")[:10]:
     ScriptTemplate("automation", "Resultado automatizado", "Base segura para publicar un resultado.", "reporte_automatico.py", """import os
 from datetime import datetime
 
-nombre = os.getenv("NOMBRE", "PixelPy")
+nombre = os.getenv("NOMBRE", "py.Studio")
 contenido = f"Reporte de {nombre}\nActualizado: {datetime.now():%d-%m-%Y %H:%M}\n"
 open("resultado.txt", "w", encoding="utf-8").write(contenido)
 print("resultado.txt actualizado")

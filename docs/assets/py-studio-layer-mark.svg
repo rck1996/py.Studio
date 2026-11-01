@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 100 100" role="img" aria-labelledby="title">
+  <title id="title">Símbolo de capas de py.Studio</title>
+  <rect width="100" height="100" rx="18" fill="#F6F1E7"/>
+  <path d="m50 54 35 19-35 19-35-19z" fill="#111111"/>
+  <path d="m50 36 35 19-35 19-35-19z" fill="#F6F1E7" stroke="#111111" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="m50 14 35 19-35 19-35-19z" fill="#E84E0F"/>
+</svg>

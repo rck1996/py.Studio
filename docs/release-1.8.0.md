@@ -1,5 +1,7 @@
 # PixelPy 1.8.0 — Pixel Studio
 
+Esta release se publicó antes del cambio de nombre a py.Studio; el título se conserva como registro histórico.
+
 - Nueva identidad visual en Proyectos, Editor, Consola, Notebook, Automatizaciones y Resultados.
 - Logo Pixel Spark vectorial, con iconos adaptativos y monocromos para Android.
 - Navegación inferior clara, acción principal del notebook y estado de ejecución visible.

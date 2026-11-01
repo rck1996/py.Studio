@@ -1,6 +1,6 @@
-# Diseño y recorridos de PixelPy
+# Diseño y recorridos de py.Studio
 
-PixelPy sigue la referencia visual RCK1996 con retícula de dibujo, órbitas y filetes discretos. Orbit Code sustituye a Pixel Spark en cabecera e iconos adaptativos. El modo oscuro usa navy, marfil y azul eléctrico; el claro, papel cálido y terracota. Ambos comparten jerarquía, fondo técnico y componentes. Los tokens y usos están en la [guía de identidad visual](identidad-visual.md). Cada pantalla debe comunicar dónde estás, qué puedes hacer y qué ocurrió después de una acción.
+py.Studio usa planos apilados, una retícula de construcción tenue y la paleta naranja, crema, negro y neutro. El tema oscuro y el claro comparten jerarquía, recorridos y componentes; cambia la asignación de superficies y texto, no el orden del trabajo. Los tokens y usos están en la [guía de identidad visual](identidad-visual.md). Cada pantalla debe comunicar dónde estás, qué puedes hacer y qué ocurrió después de una acción.
 
 ## Recorridos principales
 
@@ -17,7 +17,7 @@ PixelPy sigue la referencia visual RCK1996 con retícula de dibujo, órbitas y f
 - En Proyectos los scripts se abren tocando su fila; las operaciones secundarias siguen en el menú de cada archivo.
 - Scripts y Recursos usan chips compactos; el botón de nuevo script se sitúa junto a ellos.
 - El proyecto activo se identifica por su ruta canónica y se resalta con el acento del tema.
-- La retícula y el diagrama orbital se perciben desde Proyectos y continúan bajo las barras superior e inferior; las tarjetas conservan contraste y lectura.
+- La retícula y las guías geométricas se perciben desde Proyectos y continúan bajo las barras superior e inferior; las tarjetas conservan contraste y lectura.
 - Proyectos ofrece accesos de tarea a Data Lab y Automatizaciones, con descripciones que explican qué pasa al abrirlos; se apilan en teléfonos estrechos.
 - La navegación inferior conserva contraste en ambos modos; los botones principales usan el acento y los contornos se reservan para separación y foco.
 
@@ -33,13 +33,17 @@ PixelPy sigue la referencia visual RCK1996 con retícula de dibujo, órbitas y f
 - El notebook presenta progreso y una acción principal de ejecución; el constructor de gráficos puede desplazarse verticalmente.
 - Si falta el CSV para un gráfico, se puede importarlo desde el constructor sin abandonar el flujo; la importación valida extensión, tamaño y colisiones de nombre.
 
-## Validación histórica de 1.8.0
+## Validación histórica de 1.8.0 (identidad anterior)
 
-Compilación de producción firmada, pruebas unitarias y lint completados. Instalación como actualización en Samsung S25+ con Android 16, conservando proyectos. Comprobados Proyectos, Editor, entrada de texto del script, salida correcta en Consola, navegación Atrás, acceso al notebook y pantalla vacía de Automatizaciones. Las capturas `studio-*.png` son evidencia histórica de Pixel Studio 1.8.0; la galería vigente Orbit Code está en el README.
+Compilación de producción firmada, pruebas unitarias y lint completados. Instalación como actualización en Samsung S25+ con Android 16, conservando proyectos. Comprobados Proyectos, Editor, entrada de texto del script, salida correcta en Consola, navegación Atrás, acceso al notebook y pantalla vacía de Automatizaciones. Las capturas `studio-*.png` son evidencia histórica de Pixel Studio 1.8.0.
 
-## Validación visual Orbit Code
+## Validación visual anterior al rebranding
 
-APK de desarrollo aislado instalado en Samsung Tab S8 y Samsung Galaxy S25+ (SM-S936B, Android 16), sin reemplazar la app estable. En ambos dispositivos se revisaron Proyectos, Editor y Data Lab en los dos temas. En el S25+ la órbita se aparta del contenido principal para adaptarse al ancho, y las tres densidades se eligen desde una lista expandible dentro del diálogo. Se verificó en el teléfono que cambiar el interruptor de tema mientras la lista está abierta no oculta ni deja sin repintar el diálogo; también se comprobó la selección de Compacta. La compilación, lint y 76 pruebas unitarias pasaron. Las galerías incluyen capturas reales de cada equipo y del diálogo de apariencia. El detalle y los límites están en el [informe de QA](QA_REPORT.md).
+APK de desarrollo aislado instalado en Samsung Tab S8 y Samsung Galaxy S25+ (SM-S936B, Android 16), sin reemplazar la app estable. En ambos dispositivos se revisaron Proyectos, Editor y Data Lab en los dos temas. La compilación, lint y 76 pruebas unitarias pasaron en esa build. Las galerías incluyen capturas reales de cada equipo y del diálogo de apariencia. Esta evidencia no valida todavía la nueva paleta ni el logo py.Studio; el detalle histórico y los límites están en el [informe de QA](QA_REPORT.md).
+
+## Revisión visual de py.Studio · 2026-11-01
+
+La variante preview actualizada se abrió en Tab S8 y Galaxy S25+ sin tocar la app estable. Se verificaron Proyectos, Editor y Notebook en tema claro y oscuro; el isotipo y el wordmark se muestran correctamente en ambas pantallas de inicio. En el S25+, Notebook presenta **ACCIONES ▾**, el diálogo de apariencia cabe en pantalla y el cambio de tema conserva el diálogo aun con densidad expandida. Las tiras de pestañas y teclas del Editor se desplazan horizontalmente, aunque falta hacer más evidente que admiten ese gesto. La galería y sus límites están en [Capturas](screenshots/README.md).
 
 ## Cobertura adicional
 

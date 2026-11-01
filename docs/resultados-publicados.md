@@ -1,14 +1,14 @@
 # Resultados publicados y widget
 
-PixelPy separa el archivo de trabajo del resultado publicado. Al terminar correctamente una automatización, copia el archivo destacado a su almacenamiento privado mediante reemplazo atómico. Una ejecución fallida conserva la última copia correcta.
+py.Studio separa el archivo de trabajo del resultado publicado. Al terminar correctamente una automatización, copia el archivo destacado a su almacenamiento privado mediante reemplazo atómico. Una ejecución fallida conserva la última copia correcta.
 
 ## Flujo
 
 1. La automatización ejecuta el script guardado.
-2. PixelPy verifica que el resultado configurado fue creado o actualizado durante esa ejecución.
+2. py.Studio verifica que el resultado configurado fue creado o actualizado durante esa ejecución.
 3. Se publica una copia segura en `filesDir/published/<automation-id>/`.
 4. El widget se actualiza con estado, fecha, nombre y tamaño.
-5. **VER RESULTADO** abre el visor integrado de PixelPy.
+5. **VER RESULTADO** abre el visor integrado de py.Studio.
 
 El widget nunca abre directamente el archivo que está escribiendo el script.
 
@@ -20,7 +20,7 @@ La consola reúne los archivos creados o actualizados en una galería horizontal
 - **GUARDAR:** exporta una copia mediante el selector de Android.
 - **COMPARTIR:** entrega el archivo a otra aplicación.
 
-En este caso PixelPy abre el archivo actual del proyecto. La copia estable en `published/` se reserva para automatizaciones y widgets.
+En este caso py.Studio abre el archivo actual del proyecto. La copia estable en `published/` se reserva para automatizaciones y widgets.
 
 Cada ejecución manual también crea una sesión local independiente. El historial conserva el código ejecutado, la salida y una copia de sus archivos generados. Las sesiones fijadas no se eliminan durante la limpieza automática; las demás conservan las 20 más recientes. Desde **HISTORIAL** se puede:
 
@@ -36,7 +36,7 @@ Cada ejecución manual también crea una sesión local independiente. El histori
 - Las imágenes permiten zoom táctil.
 - ZIP muestra hasta 500 entradas sin extraer contenido.
 - Excel permite cambiar de hoja, buscar filas, consultar fórmulas y reconocer paneles congelados en las primeras 200 filas.
-- Los HTML generados por Plotly se abren como gráficos interactivos dentro de PixelPy.
+- Los HTML generados por Plotly se abren como gráficos interactivos dentro de py.Studio.
 - Los SVG generados por Data Lab se abren con ajuste al ancho, zoom y exportación PNG.
 
 Los libros complejos, fórmulas, estilos avanzados y formatos no compatibles pueden abrirse con **OTRA APP**.
@@ -72,9 +72,9 @@ El botón **EJECUTAR** solo encola el trabajo; Python no se ejecuta dentro del w
 
 ## Si VER RESULTADO no abre
 
-1. Abre PixelPy y comprueba el estado de la automatización.
+1. Abre py.Studio y comprueba el estado de la automatización.
 2. Si indica error, toca su tarjeta para consultar el diagnóstico.
 3. Ejecuta nuevamente la automatización y confirma que el script actualiza el archivo destacado.
 4. Si el visor integrado abre pero **OTRA APP** no funciona, instala una aplicación compatible con ese formato.
 
-Cuando el archivo publicado falta o su ruta deja de ser válida, PixelPy muestra un estado de resultado no disponible en lugar de provocar un cierre inesperado.
+Cuando el archivo publicado falta o su ruta deja de ser válida, py.Studio muestra un estado de resultado no disponible en lugar de provocar un cierre inesperado.

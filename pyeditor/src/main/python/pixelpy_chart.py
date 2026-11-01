@@ -1,4 +1,4 @@
-"""Generador SVG liviano y reproducible para PixelPy."""
+"""Generador SVG liviano y reproducible para py.Studio."""
 
 from html import escape
 from pathlib import Path
@@ -58,7 +58,7 @@ def chart(rows, x, y, kind="line", title="Gráfico", output="grafico.svg"):
         f'<text x="{left - 10}" y="{top + 8}" text-anchor="end" font-family="sans-serif" font-size="13" fill="{ink}">{maximum:g}</text>',
         f'<text x="{left - 10}" y="{top + plot_h}" text-anchor="end" font-family="sans-serif" font-size="13" fill="{ink}">{minimum:g}</text>',
         f'<rect x="{width - 150}" y="18" width="120" height="30" fill="{yellow}" stroke="{ink}" stroke-width="2"/>',
-        f'<text x="{width - 90}" y="39" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="900" fill="{ink}">PIXELPY</text>',
+        f'<text x="{width - 90}" y="39" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="900" fill="{ink}">py.Studio</text>',
         "</svg>",
     ])
     destination = Path(output)

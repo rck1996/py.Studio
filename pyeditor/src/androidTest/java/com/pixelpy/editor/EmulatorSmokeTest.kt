@@ -19,7 +19,7 @@ class EmulatorSmokeTest {
 
     @Test
     fun activityAndPythonRuntimeWorkOnEmulator() {
-        composeRule.onNodeWithText("PIXELPY").assertIsDisplayed()
+        composeRule.onNodeWithText("py.Studio").assertIsDisplayed()
 
         val applicationContext = InstrumentationRegistry.getInstrumentation()
             .targetContext.applicationContext
@@ -30,7 +30,7 @@ class EmulatorSmokeTest {
         val workDir = File(applicationContext.cacheDir, "emulator-smoke")
         val result = runner.callAttr(
             "execute",
-            "print(\"PixelPy emulator OK\")",
+            "print(\"py.Studio emulator OK\")",
             "",
             workDir.absolutePath,
             null,
@@ -42,7 +42,7 @@ class EmulatorSmokeTest {
         assertTrue(result.callAttr("get", "ok").toBoolean())
         assertTrue(
             result.callAttr("get", "output").toString()
-                .contains("PixelPy emulator OK")
+                .contains("py.Studio emulator OK")
         )
     }
 }

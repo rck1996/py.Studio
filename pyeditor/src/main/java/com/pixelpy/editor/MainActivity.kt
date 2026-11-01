@@ -58,12 +58,13 @@ import java.util.concurrent.atomic.AtomicReference
 import android.provider.OpenableColumns
 import java.util.zip.ZipInputStream
 
-private val Ink = Color(0xFF061124)
-private val Outline = Color(0xFF243753)
-private val Yellow = Color(0xFF5E9EFF)
-private val Pink = Color(0xFFFF9C91)
-private val Blue = Color(0xFF0C2244)
-private val Green = Color(0xFF76ABFF)
+private val Ink = Color(0xFF111111)
+private val Outline = Color(0xFFB9B3A8)
+private val Yellow = Color(0xFFE84E0F)
+private val Pink = Color(0xFFD8664B)
+private val Blue = Color(0xFFEEE8DE)
+private val Green = Color(0xFFB9B3A8)
+private val Success = Color(0xFF6B8B69)
 @Composable
 private fun referenceColor(color: Color): Color {
     val scheme = MaterialTheme.colorScheme
@@ -73,6 +74,7 @@ private fun referenceColor(color: Color): Color {
         Pink -> scheme.tertiary
         Blue -> scheme.surfaceVariant
         Outline -> scheme.outline
+        Success -> Success
         else -> color
     }
 }
@@ -85,7 +87,8 @@ private fun referenceContentColor(color: Color): Color {
         Green -> scheme.onSecondary
         Pink -> scheme.onTertiary
         Blue -> scheme.onSurfaceVariant
-        Ink -> Color(0xFFF1EDDF)
+        Success -> Ink
+        Ink -> Color(0xFFF6F1E7)
         else -> scheme.onSurface
     }
 }
@@ -274,7 +277,7 @@ class MainActivity : ComponentActivity() {
                 ?.sortedBy { it.name }
                 ?.ifEmpty {
                     val main = File(openedProject, "main.py")
-                    writeUtf8Atomically(main, "print(\"Nuevo proyecto PixelPy\")\n")
+                    writeUtf8Atomically(main, "print(\"Nuevo proyecto py.Studio\")\n")
                     listOf(main)
                 }
                 ?: emptyList()
@@ -615,27 +618,27 @@ class MainActivity : ComponentActivity() {
     }
     val navigationTab = if (showNotebook || showAutomations) Tab.Projects else tab
     val scheme = if (darkMode) darkColorScheme(
-        primary = Yellow, onPrimary = Color(0xFFF1EDDF),
-        secondary = Green, onSecondary = Color(0xFFF1EDDF),
-        tertiary = Pink, onTertiary = Color(0xFF061124),
-        primaryContainer = Color(0xFF1E3A64), onPrimaryContainer = Color(0xFFDCE8FF),
-        secondaryContainer = Color(0xFF183153), onSecondaryContainer = Color(0xFFDDE8FF),
-        tertiaryContainer = Color(0xFF30313A), onTertiaryContainer = Color(0xFFF1EDDF),
-        background = Color(0xFF020B1B), surface = Color(0xFF041126), surfaceVariant = Blue,
-        onBackground = Color(0xFFF1EDDF), onSurface = Color(0xFFF1EDDF),
-        onSurfaceVariant = Color(0xFFF1EDDF), outline = Outline,
+        primary = Yellow, onPrimary = Color(0xFF111111),
+        secondary = Green, onSecondary = Color(0xFF111111),
+        tertiary = Pink, onTertiary = Color(0xFF111111),
+        primaryContainer = Color(0xFF462116), onPrimaryContainer = Color(0xFFF8DED3),
+        secondaryContainer = Color(0xFF34312C), onSecondaryContainer = Color(0xFFF6F1E7),
+        tertiaryContainer = Color(0xFF39241E), onTertiaryContainer = Color(0xFFF6F1E7),
+        background = Color(0xFF111111), surface = Color(0xFF191919), surfaceVariant = Color(0xFF292724),
+        onBackground = Color(0xFFF6F1E7), onSurface = Color(0xFFF6F1E7),
+        onSurfaceVariant = Color(0xFFF6F1E7), outline = Color(0xFF5B564F),
     ) else lightColorScheme(
-        primary = Color(0xFFE34B12), onPrimary = Color(0xFFFFF8EB),
-        secondary = Color(0xFFD83F0D), onSecondary = Color(0xFFFFF8EB),
-        tertiary = Color(0xFFEAE9DF), onTertiary = Color(0xFF171919),
-        primaryContainer = Color(0xFFF4C2B1), onPrimaryContainer = Color(0xFF5C1C07),
-        secondaryContainer = Color(0xFFF7D9CB), onSecondaryContainer = Color(0xFF4B2112),
-        tertiaryContainer = Color(0xFFF0EBE0), onTertiaryContainer = Color(0xFF171919),
-        background = if (highContrast) Color.White else Color(0xFFE9E4DA),
-        surface = if (highContrast) Color.White else Color(0xFFF5F1E7),
-        surfaceVariant = Color(0xFFEAE9DF),
-        onBackground = Color(0xFF171919), onSurface = Color(0xFF171919),
-        onSurfaceVariant = Color(0xFF171919), outline = Color(0xFFA9A69C),
+        primary = Yellow, onPrimary = Color(0xFF111111),
+        secondary = Green, onSecondary = Color(0xFF111111),
+        tertiary = Color(0xFFEEE8DE), onTertiary = Color(0xFF111111),
+        primaryContainer = Color(0xFFF7D4C7), onPrimaryContainer = Color(0xFF541F0D),
+        secondaryContainer = Color(0xFFE9E3D9), onSecondaryContainer = Color(0xFF24211D),
+        tertiaryContainer = Color(0xFFEEE8DE), onTertiaryContainer = Color(0xFF111111),
+        background = if (highContrast) Color.White else Color(0xFFF6F1E7),
+        surface = if (highContrast) Color.White else Color(0xFFF6F1E7),
+        surfaceVariant = Color(0xFFEEE8DE),
+        onBackground = Color(0xFF111111), onSurface = Color(0xFF111111),
+        onSurfaceVariant = Color(0xFF111111), outline = Outline,
     )
     SideEffect {
         (context as? ComponentActivity)?.window?.let { window ->
@@ -658,8 +661,8 @@ class MainActivity : ComponentActivity() {
             contentColor = scheme.onBackground,
             topBar = {
             Row(Modifier.fillMaxWidth().statusBarsPadding().height(58.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(painterResource(R.drawable.pixelpy_brand_mark), "PixelPy", Modifier.size(34.dp), tint = Color.Unspecified)
-                Spacer(Modifier.width(9.dp)); Column(Modifier.weight(1f)) { Text("PIXELPY", fontWeight = FontWeight.Medium, fontSize = 19.sp, letterSpacing = 1.6.sp); Text(current.name, Modifier.testTag("current-file-name"), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f), fontFamily = FontFamily.Monospace, fontSize = 11.sp, maxLines = 1) }
+                Icon(painterResource(R.drawable.pixelpy_brand_mark), "py.Studio", Modifier.size(34.dp), tint = Color.Unspecified)
+                Spacer(Modifier.width(9.dp)); Column(Modifier.weight(1f)) { Text(buildAnnotatedString { append("py"); withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append(".") }; append("Studio") }, fontWeight = FontWeight.Bold, fontSize = 19.sp, letterSpacing = (-0.4).sp); Text(current.name, Modifier.testTag("current-file-name"), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f), fontFamily = FontFamily.Monospace, fontSize = 11.sp, maxLines = 1) }
                 if (!showAutomations && !showNotebook && (tab == Tab.Editor || running)) {
                     BrutalButton(if (running) "■ DETENER" else "▶ EJECUTAR", if (running) Pink else Green, Modifier.testTag("run-button"), onClick = { if (running) stopCode() else runCode(false) })
                 } else {
@@ -830,7 +833,7 @@ class MainActivity : ComponentActivity() {
                                 val zip = withContext(Dispatchers.IO) {
                                     executionSessionStore.export(
                                         session,
-                                        File(context.cacheDir, "PixelPy-${session.scriptName.removeSuffix(".py")}-${session.id.take(8)}.zip"),
+                                        File(context.cacheDir, "py.Studio-${session.scriptName.removeSuffix(".py")}-${session.id.take(8)}.zip"),
                                     )
                                 }
                                 exportFile = zip
@@ -849,7 +852,7 @@ class MainActivity : ComponentActivity() {
             val name = raw.trim().replace(Regex("[^a-zA-Z0-9_-]"), "_").ifBlank { "script" } + ".py"
             val file = withContext(Dispatchers.IO) {
                 File(dir, name).also { target ->
-                    if (!target.exists()) writeUtf8Atomically(target, "# $name\nprint(\"Hola desde PixelPy\")\n")
+                    if (!target.exists()) writeUtf8Atomically(target, "# $name\nprint(\"Hola desde py.Studio\")\n")
                 }
             }
             files = dir.listFiles { candidate -> candidate.extension == "py" }!!.sortedBy { it.name }
@@ -1330,7 +1333,7 @@ private fun ProjectWorkflowCard(
 @Composable private fun Console(fileName: String, code: String, output: String, generated: List<File>, sessions: List<ExecutionSession>, success: Boolean?, running: Boolean, errorLine: Int?, onBack: () -> Unit, onGoToLine: (Int) -> Unit, onRun: () -> Unit, onRunWithParameters: (Map<String, String>) -> Unit, onView: (File) -> Unit, onSave: (File) -> Unit, onShare: (File) -> Unit, onOpenSessionArtifact: (ExecutionSession, String) -> Unit, onPinSession: (ExecutionSession) -> Unit, onDeleteSession: (ExecutionSession) -> Unit, onExportSession: (ExecutionSession) -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
-    val report = "PIXELPY LOG\n\nCÓDIGO:\n$code\n\nSALIDA:\n$output"
+    val report = "PY.STUDIO LOG\n\nCÓDIGO:\n$code\n\nSALIDA:\n$output"
     val explanation = explainError(output)
     var showHistory by remember { mutableStateOf(false) }
     var consolePage by remember { mutableStateOf("SALIDA") }
@@ -1344,7 +1347,7 @@ private fun ProjectWorkflowCard(
     val sectionOutput = when (consolePage) { "VARIABLES" -> debugOutput.ifBlank { "Ejecuta con DEBUG para inspeccionar líneas y variables." }; "ERROR" -> if (success == false) output else "No hay errores en la última ejecución."; else -> standardOutput.ifBlank { when { running -> "Ejecutando… la salida aparecerá aquí."; success == null -> "Ejecuta un script desde el editor para ver sus resultados."; else -> "✓ Programa terminado sin salida." } } }
     val visibleOutput = if (consoleSearch.isBlank()) sectionOutput else sectionOutput.lineSequence().filter { it.contains(consoleSearch, true) }.joinToString("\n").ifBlank { "Sin coincidencias." }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) { Text("CONSOLA", fontWeight = FontWeight.Black, fontSize = 24.sp); Spacer(Modifier.weight(1f)); IconButton(onClick = { showHistory = true }) { Icon(Icons.Outlined.History, "Historial") }; Box { IconButton(onClick = { consoleActions = true }) { Icon(Icons.Outlined.MoreVert, "Más acciones") }; DropdownMenu(consoleActions, { consoleActions = false }) { DropdownMenuItem({ Text("Copiar sección") }, { consoleActions = false; clipboard.setText(AnnotatedString(sectionOutput)); android.widget.Toast.makeText(context, "Sección copiada", android.widget.Toast.LENGTH_SHORT).show() }, leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) }); DropdownMenuItem({ Text("Compartir log") }, { consoleActions = false; context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, report) }, "Compartir log")) }, leadingIcon = { Icon(Icons.Outlined.Share, null) }); DropdownMenuItem({ Text("Repetir con parámetros") }, { consoleActions = false; parameterRun = true }, enabled = !running, leadingIcon = { Icon(Icons.Outlined.Tune, null) }) } }; val status = when { running -> Yellow; success == true -> Green; success == false -> Pink; else -> Blue }; Surface(color = referenceColor(status), contentColor = referenceContentColor(status), shape = RoundedCornerShape(5.dp), border = BorderStroke(1.dp, referenceColor(Outline))) { Text(if (running) "EJECUTANDO" else if (success == false) "ERROR" else "LISTO", Modifier.padding(8.dp, 4.dp), fontWeight = FontWeight.Black, fontSize = 10.sp) } }
+        Row(verticalAlignment = Alignment.CenterVertically) { Text("CONSOLA", fontWeight = FontWeight.Black, fontSize = 24.sp); Spacer(Modifier.weight(1f)); IconButton(onClick = { showHistory = true }) { Icon(Icons.Outlined.History, "Historial") }; Box { IconButton(onClick = { consoleActions = true }) { Icon(Icons.Outlined.MoreVert, "Más acciones") }; DropdownMenu(consoleActions, { consoleActions = false }) { DropdownMenuItem({ Text("Copiar sección") }, { consoleActions = false; clipboard.setText(AnnotatedString(sectionOutput)); android.widget.Toast.makeText(context, "Sección copiada", android.widget.Toast.LENGTH_SHORT).show() }, leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) }); DropdownMenuItem({ Text("Compartir log") }, { consoleActions = false; context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, report) }, "Compartir log")) }, leadingIcon = { Icon(Icons.Outlined.Share, null) }); DropdownMenuItem({ Text("Repetir con parámetros") }, { consoleActions = false; parameterRun = true }, enabled = !running, leadingIcon = { Icon(Icons.Outlined.Tune, null) }) } }; val status = when { running -> Yellow; success == true -> Success; success == false -> Pink; else -> Blue }; Surface(color = referenceColor(status), contentColor = referenceContentColor(status), shape = RoundedCornerShape(5.dp), border = BorderStroke(1.dp, referenceColor(Outline))) { Text(if (running) "EJECUTANDO" else if (success == false) "ERROR" else "LISTO", Modifier.padding(8.dp, 4.dp), fontWeight = FontWeight.Black, fontSize = 10.sp) } }
         Spacer(Modifier.height(10.dp)); Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) { listOf("SALIDA" to Green, "VARIABLES" to Blue, "ERROR" to Pink).forEach { (label, color) -> val active = consolePage == label; Surface(onClick = { consolePage = label }, color = if (active) referenceColor(color) else MaterialTheme.colorScheme.surface, contentColor = if (active) referenceContentColor(color) else MaterialTheme.colorScheme.onSurface, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline), shape = RoundedCornerShape(5.dp)) { Text(label, Modifier.padding(horizontal = 10.dp, vertical = 6.dp), fontWeight = FontWeight.Black, fontSize = 10.sp) } } }
         OutlinedTextField(consoleSearch, { consoleSearch = it }, Modifier.fillMaxWidth(), label = { Text("Buscar en esta sección") }, singleLine = true)
         Spacer(Modifier.height(8.dp)); BrutalCard(Ink, Modifier.weight(1f)) { Text("$ python $fileName", color = referenceColor(Green), fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold); Spacer(Modifier.height(12.dp)); Text(visibleOutput, color = Color.White, fontFamily = FontFamily.Monospace, modifier = Modifier.testTag("console-output").verticalScroll(rememberScrollState())) }
@@ -1433,7 +1436,7 @@ private val LIBRARY_PROFILES = listOf(
             items(LIBRARY_PROFILES, key = { it.name }) { profile ->
                 val state = validation[profile.name]
                 Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    val stateColor = if (state == true) Green else if (state == false) Pink else Yellow
+                    val stateColor = if (state == true) Success else if (state == false) Pink else Yellow
                     Box(Modifier.size(42.dp).background(referenceColor(stateColor)).border(1.dp, referenceColor(Outline)), contentAlignment = Alignment.Center) {
                         Text(if (state == true) "✓" else if (state == false) "!" else "…", fontWeight = FontWeight.Black)
                     }
@@ -1445,7 +1448,7 @@ private val LIBRARY_PROFILES = listOf(
                     }
                 }
             }
-            item { Text("Perfiles incluidos y probados dentro de la app. PixelPy no instala paquetes libres en tiempo de ejecución.", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+            item { Text("Perfiles incluidos y probados dentro de la app. py.Studio no instala paquetes libres en tiempo de ejecución.", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
         }
     }, confirmButton = { BrutalButton("CERRAR", Yellow, onClick = onDismiss) })
 }
@@ -1471,7 +1474,7 @@ private val LIBRARY_PROFILES = listOf(
                 }
             }
             items(sessions, key = { it.id }) { session ->
-                Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, referenceColor(if (session.success) Green else Pink)).clickable { detail = session }.padding(10.dp)) {
+                Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, referenceColor(if (session.success) Success else Pink)).clickable { detail = session }.padding(10.dp)) {
                     Row {
                         Text(if (session.success) "✓ " else "✕ ", fontWeight = FontWeight.Black)
                         Text(session.scriptName, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
@@ -1846,8 +1849,8 @@ private fun explainError(output: String): String? = when {
     "TypeError" in output -> "La operación recibió un tipo de dato incompatible. Revisa si estás mezclando texto, números, listas u otros valores."
     "IndexError" in output -> "Se intentó acceder a una posición que no existe dentro de una lista o secuencia."
     "KeyError" in output -> "El diccionario no contiene la clave solicitada. Puedes comprobarla con `clave in diccionario` o usar `.get()`."
-    "ModuleNotFoundError" in output -> "Ese módulo no está incluido en PixelPy. Los módulos de la biblioteca estándar funcionan; los paquetes externos se añadirán desde el gestor de paquetes."
-    "PermissionError" in output -> "Android bloqueó esa ruta. Genera el archivo en el proyecto y usa GUARDAR o COMPARTIR desde PixelPy."
+    "ModuleNotFoundError" in output -> "Ese módulo no está incluido en py.Studio. Los módulos de la biblioteca estándar funcionan; los paquetes externos se añadirán desde el gestor de paquetes."
+    "PermissionError" in output -> "Android bloqueó esa ruta. Genera el archivo en el proyecto y usa GUARDAR o COMPARTIR desde py.Studio."
     "URLError" in output || "No address associated with hostname" in output -> "No se pudo alcanzar el servidor. Comprueba Internet, la dirección y que el servicio esté disponible."
     "Traceback" in output -> "Python detuvo la ejecución por un error. La última línea indica el tipo y el mensaje; usa IR A LÍNEA para corregirlo."
     else -> null

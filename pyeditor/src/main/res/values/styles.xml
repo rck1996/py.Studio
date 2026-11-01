@@ -1,8 +1,8 @@
 <resources>
-    <style name="Theme.PixelPy" parent="android:style/Theme.Material.NoActionBar">
+    <style name="Theme.PyStudio" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans-serif-condensed</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:statusBarColor">#020B1B</item>
-        <item name="android:navigationBarColor">#020B1B</item>
+        <item name="android:statusBarColor">#111111</item>
+        <item name="android:navigationBarColor">#111111</item>
     </style>
 </resources>

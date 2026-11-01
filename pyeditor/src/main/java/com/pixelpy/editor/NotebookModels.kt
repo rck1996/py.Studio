@@ -207,7 +207,7 @@ private fun PixelNotebook.toJson() = JSONObject()
 internal fun cumulativeNotebookSource(cells: List<NotebookCell>, throughIndex: Int): String =
     cells.take(throughIndex + 1)
         .filter { it.type == NotebookCellType.Code }
-        .joinToString("\n\n") { "# PixelPy cell ${it.id}\n${it.source}" }
+        .joinToString("\n\n") { "# py.Studio cell ${it.id}\n${it.source}" }
 
 internal fun invalidateNotebookCellsAfterEdit(
     cells: List<NotebookCell>,

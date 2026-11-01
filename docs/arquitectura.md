@@ -1,6 +1,6 @@
-# Arquitectura de PixelPy
+# Arquitectura de py.Studio
 
-PixelPy es una app Android nativa y local-first. La interfaz Compose trabaja sobre proyectos privados del dispositivo; el runtime Python integrado ejecuta scripts y celdas sin enviar su contenido a un servicio de PixelPy.
+py.Studio es una app Android nativa y local-first. La interfaz Compose trabaja sobre proyectos privados del dispositivo; el runtime Python integrado ejecuta scripts y celdas sin enviar su contenido a un servicio remoto.
 
 ## Recorrido de una ejecución
 
@@ -19,7 +19,7 @@ flowchart LR
     PUBLISHED --> WIDGET[Notificación y widget]
 ```
 
-El editor y Data Lab reutilizan el runtime integrado. La consola presenta la salida, errores y variables; las ejecuciones guardan sesiones con código, duración y artefactos. Las automatizaciones delegan el disparo a WorkManager y validan que las rutas permanezcan dentro de los proyectos de PixelPy. Los resultados que expone un widget o una automatización se publican como una copia en almacenamiento privado para que el visor no lea un archivo que el script esté modificando.
+El editor y Data Lab reutilizan el runtime integrado. La consola presenta la salida, errores y variables; las ejecuciones guardan sesiones con código, duración y artefactos. Las automatizaciones delegan el disparo a WorkManager y validan que las rutas permanezcan dentro de los proyectos de py.Studio. Los resultados que expone un widget o una automatización se publican como una copia en almacenamiento privado para que el visor no lea un archivo que el script esté modificando.
 
 ## Componentes
 
@@ -37,10 +37,10 @@ Las automatizaciones se guardan en `filesDir/automations/`; sus rutas de scripts
 ## Privacidad y límites
 
 - Proyectos, historial y resultados permanecen en el dispositivo por defecto.
-- PixelPy no sincroniza proyectos automáticamente con la nube. El acceso a Internet puede ocurrir si el script del usuario realiza solicitudes de red o si el usuario usa explícitamente una función externa habilitada.
+- py.Studio no sincroniza proyectos automáticamente con la nube. El acceso a Internet puede ocurrir si el script del usuario realiza solicitudes de red o si el usuario usa explícitamente una función externa habilitada.
 - Las automatizaciones no garantizan una hora exacta: Doze, ahorro de batería y políticas del fabricante pueden retrasar WorkManager.
 - Las librerías Python disponibles dependen de los perfiles y paquetes incluidos en la build. Las propuestas visuales no garantizan que una dependencia esté instalada.
-- Las copias publicadas son resultados exportados por PixelPy, no una segunda fuente editable del proyecto.
+- Las copias publicadas son resultados exportados por py.Studio, no una segunda fuente editable del proyecto.
 
 ## Validación
 

@@ -1,4 +1,4 @@
-# Informe de QA de PixelPy
+# Informe de QA de py.Studio
 
 Este informe separa compilación automatizada, pruebas unitarias y revisión visual en dispositivo. Una build de vista previa no equivale a una versión publicada.
 
@@ -14,6 +14,12 @@ Este informe separa compilación automatizada, pruebas unitarias y revisión vis
 
 La app estable `com.pixelpy.editor` no se reemplazó durante esta verificación. El paquete de vista previa conserva almacenamiento separado para proteger los datos de producción.
 
+## Cambio de identidad py.Studio
+
+El repositorio y los recursos de marca ya usan py.Studio, con símbolo de capas y paleta naranja/crema/negro/neutro. La preview se compiló, instaló y revisó en Tab S8 y Galaxy S25+; las capturas de Proyectos, Editor y Notebook en ambos temas están en [la galería py.Studio](screenshots/README.md). Se verificaron nombre e isotipo de cabecera; la app estable no se reemplazó. Esta verificación visual no es una release.
+
+En el Galaxy S25+ (SM-S936B, Android 16, 1080 × 2340) el notebook cambia a menú desplegable de acciones, el diálogo de apariencia cabe y el tema se puede cambiar con el selector de densidad expandido. En Editor, tanto la tira de archivos como la fila de teclas auxiliares admiten desplazamiento horizontal para alcanzar sus elementos, aunque el contenido parcial en el borde no hace obvio ese gesto. Se registra como oportunidad de mejora de descubrimiento, no como bloqueo funcional. Evidencia visual: [capturas del S25+](screenshots/README.md).
+
 ## Qué cubre la revisión visual
 
 En el S25+ (1080 × 2340, escala de fuente del sistema 0,9) la órbita se redujo y desplazó hacia el borde superior derecho para liberar el contenido en el ancho del teléfono. Se comprobó Proyectos, Editor y Data Lab en los dos temas. El selector de densidad muestra Compacta, Normal y Amplia sin partir las etiquetas; el diálogo de apariencia cabe en pantalla. La galería incluye capturas de la app real, recortadas para excluir iconos y barras del sistema, más una vista del selector expandido.
@@ -26,6 +32,6 @@ La variante `developmentDebug` usa ahora el identificador aislado `com.pixelpy.e
 
 - La prueba unitaria no sustituye los recorridos de UI en todos los tamaños, escalas de fuente y teclados.
 - La revisión visual no certifica rendimiento prolongado, accesibilidad exhaustiva, rotación ni retrasos de tareas por políticas del fabricante.
-- El rediseño Orbit Code sigue en desarrollo y no se distribuye como la release estable `1.8.0`.
+- La release estable `1.8.0` conserva la identidad anterior; las capturas py.Studio son de una preview de desarrollo.
 
 Consulta [Experiencia de usuario](experiencia-de-usuario.md) para recorridos y límites funcionales, y [Capturas](screenshots/README.md) para identificar origen y estado de cada imagen.

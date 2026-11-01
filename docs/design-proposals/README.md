@@ -1,6 +1,6 @@
 # Exploración de diseño anterior de PixelPy
 
-Archivo histórico de conceptos exploratorios generados con la herramienta integrada de imágenes. No representan la identidad actual ni capturas de la app, y no garantizan disponibilidad de las librerías mostradas en los ejemplos. La identidad vigente es [Orbit Code](../identidad-visual.md).
+Archivo histórico de conceptos exploratorios generados con la herramienta integrada de imágenes. No representan la identidad actual ni capturas de la app, y no garantizan disponibilidad de las librerías mostradas en los ejemplos. La identidad vigente es [py.Studio](../identidad-visual.md).
 
 ## Tres direcciones de interfaz
 
@@ -22,7 +22,7 @@ Cada propuesta compara Proyectos, Notebook y Resultados. Debe conservar acciones
 - **Code Orbit:** chevrones de código formando una órbita abierta.
 - **Lab Fold:** página de notebook plegada con P y cursor en negativo.
 
-Las propuestas de logo son exploratorias. La marca actual deriva de Code Orbit, refinada como Orbit Code y ya aplicada en vectores, icono adaptativo y versión monocroma.
+Las propuestas y activos anteriores son archivo histórico; la identidad actual de py.Studio está definida en la [guía vigente](../identidad-visual.md).
 
 ![Pixel Spark](logo-a-pixel-spark.png)
 

@@ -74,10 +74,10 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
-private val ResultInk = Color(0xFF061124)
-private val ResultPaper = Color(0xFF020B1B)
-private val ResultYellow = Color(0xFF5E9EFF)
-private val ResultBlue = Color(0xFF0C2244)
+private val ResultInk = Color(0xFF111111)
+private val ResultPaper = Color(0xFF111111)
+private val ResultYellow = Color(0xFFE84E0F)
+private val ResultBlue = Color(0xFF292724)
 private const val MAX_PREVIEW_BYTES = 1_000_000
 
 internal enum class PublishedPreviewKind { Text, Markdown, Json, Csv, Image, Svg, Zip, Excel, Html, External }
@@ -229,22 +229,22 @@ class PublishedResultActivity : ComponentActivity() {
         setContent {
             MaterialTheme(
                 colorScheme = if (darkMode) darkColorScheme(
-                    primary = ResultYellow, onPrimary = ResultInk,
-                    secondary = Color(0xFF76ABFF), onSecondary = ResultInk,
-                    primaryContainer = Color(0xFF1E3A64), onPrimaryContainer = Color(0xFFDCE8FF),
-                    secondaryContainer = Color(0xFF183153), onSecondaryContainer = Color(0xFFDDE8FF),
-                    background = ResultPaper, surface = Color(0xFF041126), surfaceVariant = ResultBlue,
-                    onBackground = Color(0xFFF1EDDF), onSurface = Color(0xFFF1EDDF), onSurfaceVariant = Color(0xFFF1EDDF),
-                    outline = Color(0xFF243753),
+                    primary = ResultYellow, onPrimary = Color(0xFF111111),
+                    secondary = Color(0xFFB9B3A8), onSecondary = ResultInk,
+                    primaryContainer = Color(0xFF462116), onPrimaryContainer = Color(0xFFF8DED3),
+                    secondaryContainer = Color(0xFF34312C), onSecondaryContainer = Color(0xFFF6F1E7),
+                    background = ResultPaper, surface = Color(0xFF191919), surfaceVariant = ResultBlue,
+                    onBackground = Color(0xFFF6F1E7), onSurface = Color(0xFFF6F1E7), onSurfaceVariant = Color(0xFFF6F1E7),
+                    outline = Color(0xFF5B564F),
                 ) else lightColorScheme(
-                    primary = Color(0xFFE34B12), onPrimary = Color(0xFFFFF8EB),
-                    secondary = Color(0xFFD83F0D), onSecondary = Color(0xFFFFF8EB),
-                    primaryContainer = Color(0xFFF4C2B1), onPrimaryContainer = Color(0xFF5C1C07),
-                    secondaryContainer = Color(0xFFF7D9CB), onSecondaryContainer = Color(0xFF4B2112),
-                    tertiaryContainer = Color(0xFFF0EBE0), onTertiaryContainer = Color(0xFF171919),
-                    background = Color(0xFFE9E4DA), surface = Color(0xFFF5F1E7), surfaceVariant = Color(0xFFEAE9DF),
-                    onBackground = Color(0xFF171919), onSurface = Color(0xFF171919), onSurfaceVariant = Color(0xFF171919),
-                    outline = Color(0xFFA9A69C),
+                    primary = ResultYellow, onPrimary = Color(0xFF111111),
+                    secondary = Color(0xFFB9B3A8), onSecondary = ResultInk,
+                    primaryContainer = Color(0xFFF7D4C7), onPrimaryContainer = Color(0xFF541F0D),
+                    secondaryContainer = Color(0xFFE9E3D9), onSecondaryContainer = Color(0xFF24211D),
+                    tertiaryContainer = Color(0xFFEEE8DE), onTertiaryContainer = ResultInk,
+                    background = Color(0xFFF6F1E7), surface = Color(0xFFF6F1E7), surfaceVariant = Color(0xFFEEE8DE),
+                    onBackground = ResultInk, onSurface = ResultInk, onSurfaceVariant = ResultInk,
+                    outline = Color(0xFFB9B3A8),
                 ),
             ) {
                 PublishedResultScreen(

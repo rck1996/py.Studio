@@ -1,8 +1,8 @@
-# Documentación de PixelPy
+# Documentación de py.Studio
 
 Esta guía separa los recorridos para usar la app, las decisiones de diseño y la información necesaria para compilar o verificarla. Empieza por la tarea que quieres completar; consulta QA y límites antes de interpretar capturas o resultados de pruebas.
 
-## Quiero usar PixelPy
+## Quiero usar py.Studio
 
 | Objetivo | Guía |
 | :--- | :--- |
@@ -16,7 +16,7 @@ Esta guía separa los recorridos para usar la app, las decisiones de diseño y l
 | Tema | Referencia |
 | :--- | :--- |
 | Capas de la app, ejecución y almacenamiento local | [Arquitectura](arquitectura.md) |
-| Paleta, retícula, órbitas y marca | [Identidad visual Orbit Code](identidad-visual.md) |
+| Nombre, símbolo de capas y paleta | [Identidad visual py.Studio](identidad-visual.md) |
 | Capturas reales y dispositivo de origen | [Galería de capturas](screenshots/README.md) |
 | Compilación, tests, lint y alcance por dispositivo | [Informe de QA](QA_REPORT.md) |
 | Cambios publicados en 1.8.0 | [Notas de versión](release-1.8.0.md) |
