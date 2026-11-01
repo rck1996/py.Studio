@@ -16,7 +16,7 @@ Consulta también los [recorridos y criterios de experiencia de usuario](docs/ex
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-B9B3A8?logo=python&logoColor=111111)
 ![Verificación Android](https://github.com/rck1996/py.Studio/actions/workflows/android.yml/badge.svg)
 
-> **Distribución:** la última versión publicada sigue siendo **1.8.0**, bajo la identidad anterior. py.Studio es el nuevo nombre y la nueva marca en preparación; las capturas nuevas muestran la build de desarrollo en una Tab S8 y no representan una release publicada. Revisa [Releases](https://github.com/rck1996/py.Studio/releases) para descargar la versión estable.
+> **Distribución:** la release estable actual es **1.8.0**, bajo la identidad anterior. El candidato **1.9.0** de py.Studio ya pasó la validación local; GitHub compilará y adjuntará el APK firmado al completar el flujo del tag. Las capturas muestran previews en Tab S8 y Galaxy S25+, no una release publicada. Revisa [Releases](https://github.com/rck1996/py.Studio/releases) para descargar la versión estable.
 
 [Recorrido](#capturas) · [Empezar](#primeros-pasos) · [Compilar](#compilar) · [Calidad](#calidad) · [Documentación](#documentación)
 
@@ -113,6 +113,20 @@ La build py.Studio en ejecución, con el nuevo isotipo y wordmark en cabecera. C
   <img src="docs/screenshots/py-studio-tab-s8/notebook-dark.png" alt="Notebook de py.Studio en modo oscuro, Samsung Tab S8" width="31%" />
 </p>
 
+### Galaxy S25+
+
+<p align="center">
+  <img src="docs/screenshots/py-studio-s25-plus/projects-light.png" alt="Proyectos de py.Studio en modo claro, Galaxy S25+" width="31%" />
+  <img src="docs/screenshots/py-studio-s25-plus/editor-light.png" alt="Editor de py.Studio en modo claro, Galaxy S25+" width="31%" />
+  <img src="docs/screenshots/py-studio-s25-plus/notebook-light.png" alt="Notebook de py.Studio en modo claro, Galaxy S25+" width="31%" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/py-studio-s25-plus/projects-dark.png" alt="Proyectos de py.Studio en modo oscuro, Galaxy S25+" width="31%" />
+  <img src="docs/screenshots/py-studio-s25-plus/editor-dark.png" alt="Editor de py.Studio en modo oscuro, Galaxy S25+" width="31%" />
+  <img src="docs/screenshots/py-studio-s25-plus/notebook-dark.png" alt="Notebook de py.Studio en modo oscuro, Galaxy S25+" width="31%" />
+</p>
+
 Consulta el flujo, Markdown compatible y límites del MVP en [Notebook local](docs/notebook.md).
 
 <details>
@@ -166,7 +180,7 @@ El APK se genera en `pyeditor/build/outputs/apk/development/debug/`.
 
 ## Versión
 
-La versión más reciente publicada sigue siendo `1.8.0` (publicada bajo la identidad anterior). La build con la marca py.Studio se verificó como preview en Tab S8, pero todavía no se distribuye como release. Consulta [Releases](https://github.com/rck1996/py.Studio/releases) para verificar APKs publicados.
+La versión más reciente publicada sigue siendo `1.8.0` (publicada bajo la identidad anterior). El candidato `1.9.0` conserva el ID de aplicación para actualizar instalaciones existentes; su APK firmado se publicará al completar el flujo de GitHub Actions. Consulta [Releases](https://github.com/rck1996/py.Studio/releases) para verificar APKs publicados.
 
 Las ejecuciones programadas son aproximadas: Android puede retrasarlas por batería, Doze o restricciones del sistema.
 
@@ -181,7 +195,7 @@ Los proyectos, automatizaciones y resultados publicados se guardan localmente. p
 | Build | Resultado | Evidencia |
 | --- | --- | --- |
 | Release estable 1.8.0 | 67 pruebas unitarias; instalación, navegación y `input()` en Galaxy S25+ · Android 16 | [Recorridos y verificación histórica](docs/experiencia-de-usuario.md) |
-| Preview py.Studio · 2026-11-01 | 76 pruebas, lint y APK de desarrollo; capturas actuales de Proyectos, Editor y Notebook en claro/oscuro en Tab S8 | [Informe de QA](docs/QA_REPORT.md) |
+| Candidato py.Studio 1.9.0 · 2026-11-01 | 76 pruebas, lint, APK de producción compilado; capturas de Proyectos, Editor y Notebook en claro/oscuro en Tab S8 y Galaxy S25+ | [Informe de QA](docs/QA_REPORT.md) |
 | Cobertura por completar | Accesibilidad exhaustiva, variaciones de ventana y todos los escenarios de segundo plano | [Límites de validación](docs/experiencia-de-usuario.md) |
 
 El badge superior informa CI; las filas describen verificaciones locales de builds identificadas por separado. No presentan la vista previa como release.
